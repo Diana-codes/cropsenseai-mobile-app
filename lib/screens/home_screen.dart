@@ -75,24 +75,10 @@ class HomeScreen extends StatelessWidget {
                     onTap: () {},
                   ),
                   QuickActionButton(
-                    icon: Icons.work_outline,
-                    label: 'Track Jobs',
-                    subtitle: 'Monitor tasks',
-                    color: Colors.white,
-                    iconColor: Colors.pink,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  QuickActionButton(
                     icon: Icons.local_florist_outlined,
                     label: 'Crop Health',
-                    subtitle: '',
-                    color: Colors.amber.shade50,
+                    subtitle: 'Scan crops',
+                    color: Colors.white,
                     iconColor: Colors.amber,
                     onTap: () {
                       Navigator.push(
@@ -103,10 +89,16 @@ class HomeScreen extends StatelessWidget {
                       );
                     },
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   QuickActionButton(
                     icon: Icons.lightbulb_outline,
                     label: 'Get Advice',
-                    subtitle: '',
+                    subtitle: 'AI advisor',
                     color: Colors.purple.shade50,
                     iconColor: AppColors.purple,
                     onTap: () {
@@ -117,6 +109,14 @@ class HomeScreen extends StatelessWidget {
                         ),
                       );
                     },
+                  ),
+                  QuickActionButton(
+                    icon: Icons.wysiwyg_rounded,
+                    label: 'My Process',
+                    subtitle: 'View stages',
+                    color: Colors.blue.shade50,
+                    iconColor: Colors.blue,
+                    onTap: () {},
                   ),
                 ],
               ),

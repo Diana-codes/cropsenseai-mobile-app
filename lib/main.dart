@@ -71,7 +71,7 @@ class _MainNavigatorState extends State<MainNavigator> {
               children: [
                 _buildNavItem(Icons.home_rounded, 'Home', 0),
                 _buildNavItem(Icons.wysiwyg_rounded, 'Process', 1),
-                _buildNavItem(Icons.calendar_today_rounded, 'Jobs', 2),
+                _buildNavItem(Icons.calendar_today_rounded, 'Season', 2),
                 _buildNavItem(Icons.person_rounded, 'Account', 3),
               ],
             ),
