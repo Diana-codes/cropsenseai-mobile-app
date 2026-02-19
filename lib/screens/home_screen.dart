@@ -8,8 +8,46 @@ import 'ai_advisor_screen_enhanced.dart';
 import 'crop_health_scanner_screen.dart';
 import 'season_planning_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _showAllRecommendations = false;
+
+  final List<Map<String, dynamic>> _allRecommendations = [
+    {
+      'icon': Icons.grass,
+      'title': 'Rice (DMIS variety)',
+      'subtitle': 'Best choice for current season conditions',
+      'duration': '120-140 days',
+      'confidence': 'High confidence',
+    },
+    {
+      'icon': Icons.grain,
+      'title': 'Maize (Hybrid variety)',
+      'subtitle': 'Good alternative with lower water needs',
+      'duration': '90-110 days',
+      'confidence': 'Medium confidence',
+    },
+    {
+      'icon': Icons.local_florist,
+      'title': 'Beans (Climbing variety)',
+      'subtitle': 'Excellent for intercropping and soil health',
+      'duration': '75-90 days',
+      'confidence': 'High confidence',
+    },
+    {
+      'icon': Icons.spa,
+      'title': 'Irish Potato',
+      'subtitle': 'High demand and good market prices',
+      'duration': '90-120 days',
+      'confidence': 'Medium confidence',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +91,20 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              const WeatherCard(),
+              WeatherCard(
+                location: 'Bugesera, Rwanda',
+                temperature: 24,
+                condition: '☁️ Partly Cloudy',
+                humidity: 65,
+                windSpeed: 12,
+                forecast: [
+                  WeatherForecast(day: 'Mon', icon: '☀️', temp: 24),
+                  WeatherForecast(day: 'Tue', icon: '⛅', temp: 23),
+                  WeatherForecast(day: 'Wed', icon: '🌤️', temp: 25),
+                  WeatherForecast(day: 'Thu', icon: '☀️', temp: 26),
+                  WeatherForecast(day: 'Fri', icon: '⛅', temp: 27),
+                ],
+              ),
               const SizedBox(height: 24),
               Text(
                 'Quick Actions',
@@ -158,9 +209,13 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      setState(() {
+                        _showAllRecommendations = !_showAllRecommendations;
+                      });
+                    },
                     child: Text(
-                      'See all',
+                      _showAllRecommendations ? 'Show less' : 'See all',
                       style: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -178,21 +233,20 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const RecommendationCard(
-                icon: Icons.grass,
-                title: 'Rice (DMIS variety)',
-                subtitle: 'Best choice for current season conditions',
-                duration: '120-140 days',
-                confidence: 'High confidence',
-              ),
-              const SizedBox(height: 12),
-              const RecommendationCard(
-                icon: Icons.grain,
-                title: 'Maize (Hybrid variety)',
-                subtitle: 'Good alternative with lower water needs',
-                duration: '90-110 days',
-                confidence: 'Medium confidence',
-              ),
+              ...(_showAllRecommendations
+                      ? _allRecommendations
+                      : _allRecommendations.take(2))
+                  .map((rec) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: RecommendationCard(
+                          icon: rec['icon'] as IconData,
+                          title: rec['title'] as String,
+                          subtitle: rec['subtitle'] as String,
+                          duration: rec['duration'] as String,
+                          confidence: rec['confidence'] as String,
+                        ),
+                      ))
+                  .toList(),
             ],
           ),
         ),

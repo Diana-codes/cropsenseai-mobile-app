@@ -2,7 +2,22 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 
 class WeatherCard extends StatelessWidget {
-  const WeatherCard({super.key});
+  final String location;
+  final int temperature;
+  final String condition;
+  final int humidity;
+  final int windSpeed;
+  final List<WeatherForecast>? forecast;
+
+  const WeatherCard({
+    super.key,
+    required this.location,
+    required this.temperature,
+    required this.condition,
+    required this.humidity,
+    required this.windSpeed,
+    this.forecast,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,94 +36,144 @@ class WeatherCard extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bugesera, Rwanda',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      location,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Row(
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          '$humidity%',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '💧',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          '$windSpeed km/h',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '💨',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '24',
-                        style: TextStyle(
+                        '$temperature',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 48,
                           fontWeight: FontWeight.bold,
+                          height: 1,
                         ),
                       ),
-                      Text(
+                      const Text(
                         '°C',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    condition,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.cloud,
-                  color: Colors.white,
-                  size: 40,
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildWeatherDetail(Icons.water_drop, 'Humidity', '65%'),
-              const SizedBox(width: 24),
-              _buildWeatherDetail(Icons.air, 'Wind', '12 km/h'),
-            ],
-          ),
+          if (forecast != null && forecast!.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Container(
+              height: 1,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: forecast!.map((day) => _buildForecastDay(day)).toList(),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildWeatherDetail(IconData icon, String label, String value) {
-    return Row(
+  Widget _buildForecastDay(WeatherForecast day) {
+    return Column(
       children: [
-        Icon(icon, color: Colors.white, size: 16),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        Text(
+          day.day,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          day.icon,
+          style: const TextStyle(fontSize: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${day.temp}°',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
   }
+}
+
+class WeatherForecast {
+  final String day;
+  final String icon;
+  final int temp;
+
+  WeatherForecast({
+    required this.day,
+    required this.icon,
+    required this.temp,
+  });
 }
