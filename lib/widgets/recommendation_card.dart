@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import '../utils/colors.dart';
+import '../utils/theme.dart';
 
 class RecommendationCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final String cropName;
+  final String description;
   final String duration;
-  final String confidence;
+  final int confidence;
 
   const RecommendationCard({
     super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.cropName,
+    required this.description,
     required this.duration,
     required this.confidence,
   });
@@ -24,23 +22,21 @@ class RecommendationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: AppTheme.lightGreen,
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 28),
+            child: const Icon(
+              Icons.eco,
+              color: AppTheme.primaryGreen,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -48,58 +44,50 @@ class RecommendationCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
+                  cropName,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
+                  description,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        duration,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    Icon(
+                      Icons.schedule,
+                      size: 14,
+                      color: AppTheme.textSecondary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
+                    Text(
+                      duration,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(width: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 4,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        color: confidence > 90
+                            ? AppTheme.lightGreen
+                            : const Color(0xFFFFF3CD),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        confidence,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
+                        '$confidence% match',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: confidence > 90
+                                  ? AppTheme.primaryGreen
+                                  : AppTheme.warningOrange,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ),
                   ],
