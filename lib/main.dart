@@ -15,6 +15,7 @@ import 'screens/profile/profile_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/crop_provider.dart';
 import 'providers/weather_provider.dart';
+import 'providers/disease_detection_provider.dart';
 import 'utils/theme.dart';
 
 void main() async {
@@ -45,6 +46,7 @@ class CropSenseApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CropProvider()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => DiseaseDetectionProvider()),
       ],
       child: MaterialApp(
         title: 'CropSense AI',
