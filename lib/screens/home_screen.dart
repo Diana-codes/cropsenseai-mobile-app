@@ -4,8 +4,9 @@ import '../widgets/weather_card.dart';
 import '../widgets/quick_action_button.dart';
 import '../widgets/alert_card.dart';
 import '../widgets/recommendation_card.dart';
-import 'ai_advisor_screen.dart';
+import 'ai_advisor_screen_enhanced.dart';
 import 'crop_health_scanner_screen.dart';
+import 'season_planning_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -72,7 +73,14 @@ class HomeScreen extends StatelessWidget {
                     subtitle: 'Start planning',
                     color: Colors.white,
                     iconColor: AppColors.primary,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SeasonPlanningScreen(),
+                        ),
+                      );
+                    },
                   ),
                   QuickActionButton(
                     icon: Icons.local_florist_outlined,
@@ -105,7 +113,7 @@ class HomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AIAdvisorScreen(),
+                          builder: (context) => const AIAdvisorScreenEnhanced(),
                         ),
                       );
                     },
