@@ -153,7 +153,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  items: RwandaLocations.provinces.map((province) {
+                  items: RwandaLocations.getProvinces().map((province) {
                     return DropdownMenuItem(
                       value: province,
                       child: Text(province),
