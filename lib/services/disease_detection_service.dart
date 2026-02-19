@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/disease.dart';
 
 class DiseaseDetectionService {
@@ -13,8 +12,6 @@ class DiseaseDetectionService {
 
   Interpreter? _interpreter;
   bool _isModelLoaded = false;
-
-  final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<void> loadModel() async {
     if (_isModelLoaded) return;
@@ -110,126 +107,6 @@ class DiseaseDetectionService {
     };
   }
 
-  Future<String> uploadImage(File imageFile) async {
-    try {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final filePath = 'detections/${_supabase.auth.currentUser?.id}/$fileName';
-
-      await _supabase.storage.from('disease-images').upload(
-            filePath,
-            imageFile,
-            fileOptions: const FileOptions(
-              cacheControl: '3600',
-              upsert: false,
-            ),
-          );
-
-      final publicUrl = _supabase.storage
-          .from('disease-images')
-          .getPublicUrl(filePath);
-
-      return publicUrl;
-    } catch (e) {
-      print('❌ Error uploading image: $e');
-      throw Exception('Failed to upload image: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> saveDetection({
-    required File imageFile,
-    required Map<String, dynamic> detectionResult,
-    String? location,
-    String? cropType,
-    String? notes,
-  }) async {
-    try {
-      final imageUrl = await uploadImage(imageFile);
-
-      final diseaseId = await _getDiseaseId(
-        detectionResult['top_disease'] as String,
-      );
-
-      final response = await _supabase.functions.invoke(
-        'save-detection',
-        body: {
-          'disease_id': diseaseId,
-          'image_url': imageUrl,
-          'confidence_score': detectionResult['confidence'],
-          'top_predictions': detectionResult['top_predictions'],
-          'location': location,
-          'crop_type': cropType,
-          'notes': notes,
-        },
-      );
-
-      if (response.status != 200) {
-        throw Exception('Failed to save detection: ${response.data}');
-      }
-
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      print('❌ Error saving detection: $e');
-      throw Exception('Failed to save detection: $e');
-    }
-  }
-
-  Future<String?> _getDiseaseId(String diseaseName) async {
-    try {
-      final response = await _supabase
-          .from('crop_diseases')
-          .select('id')
-          .eq('name', diseaseName)
-          .maybeSingle();
-
-      return response?['id'] as String?;
-    } catch (e) {
-      print('❌ Error getting disease ID: $e');
-      return null;
-    }
-  }
-
-  Future<List<DetectionResult>> getUserDetections() async {
-    try {
-      final response = await _supabase
-          .from('disease_detections')
-          .select('''
-            *,
-            disease:crop_diseases(
-              id,
-              name,
-              description,
-              symptoms,
-              severity_level,
-              affected_crops
-            )
-          ''')
-          .order('created_at', ascending: false);
-
-      return (response as List)
-          .map((json) => DetectionResult.fromJson(json))
-          .toList();
-    } catch (e) {
-      print('❌ Error fetching detections: $e');
-      throw Exception('Failed to fetch detections: $e');
-    }
-  }
-
-  Future<List<Recommendation>> getRecommendations(String diseaseId) async {
-    try {
-      final response = await _supabase
-          .from('recommendations')
-          .select('*')
-          .eq('disease_id', diseaseId)
-          .order('priority', ascending: true);
-
-      return (response as List)
-          .map((json) => Recommendation.fromJson(json))
-          .toList();
-    } catch (e) {
-      print('❌ Error fetching recommendations: $e');
-      throw Exception('Failed to fetch recommendations: $e');
-    }
-  }
 
   void dispose() {
     _interpreter?.close();
