@@ -2,72 +2,76 @@
 
 AI-Driven Decision Support for Climate-Resilient Smallholder Farming in Rwanda
 
-## Project Overview
+## Overview
 
-CropSense AI is a mobile application designed to provide climate-informed crop and seed selection recommendations for smallholder farmers in Rwanda. The system integrates weather data, agronomic knowledge, and AI-driven analysis to support pre-planting and early-season agricultural decision-making.
+CropSense AI is a mobile application designed to help smallholder farmers in Rwanda make informed decisions about crop selection, planting times, and farm management. The app provides AI-powered recommendations based on climate data, soil conditions, and historical farming data.
 
 ## Features
 
-- **User Authentication**: Secure login and registration using Supabase Auth
-- **Weather Dashboard**: Real-time weather information for Bugesera District
-- **Crop Recommendations**: AI-powered crop and seed variety suggestions based on local conditions
-- **Process Tracking**: Monitor cultivation processes and track farming stages
-- **AI Crop Advisor**: Interactive chatbot for farming guidance
-- **Disease Detection**: Image-based crop disease identification and treatment recommendations
-- **User Profile**: Manage personal information and farming statistics
+### Current Implementation
 
-## Technology Stack
+1. **Home Dashboard**
+   - Real-time weather information
+   - Quick action buttons for common tasks
+   - Alerts and recommendations
+   - Personalized crop suggestions
 
-### Frontend
-- **Framework**: Flutter (Dart)
-- **State Management**: Provider
-- **UI Components**: Material Design 3
+2. **Process Management**
+   - Track cultivation stages
+   - View detailed process information
+   - Stage-by-stage guidance
+   - Progress tracking
 
-### Backend & Services
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Weather API**: OpenWeatherMap (planned)
-- **ML Model**: TensorFlow Lite (for disease detection - planned)
+3. **Season Tracking**
+   - Current season overview
+   - Performance statistics
+   - Historical data
+   - Farmer achievements
 
-### Development Tools
-- VS Code
-- Git & GitHub
-- Flutter SDK
-- Android SDK
+4. **User Profile**
+   - Farmer information management
+   - Settings and preferences
+   - Contact information
+
+5. **AI Crop Advisor**
+   - Personalized crop recommendations
+   - Location-based suggestions
+   - Soil type consideration
+   - Season-specific advice
+
+6. **Crop Health Scanner**
+   - Disease detection guidance
+   - Photo upload functionality
+   - Common disease information
+   - Treatment recommendations
+
+## Tech Stack
+
+- **Framework**: Flutter
+- **Language**: Dart
+- **UI**: Material Design 3
+- **Fonts**: Google Fonts (Inter)
+- **State Management**: StatefulWidget (can be upgraded to Provider/Riverpod later)
 
 ## Project Structure
 
 ```
 lib/
-├── main.dart                 # Application entry point
-├── providers/               # State management
-│   ├── auth_provider.dart
-│   ├── crop_provider.dart
-│   └── weather_provider.dart
-├── screens/                 # UI screens
-│   ├── splash_screen.dart
-│   ├── auth/
-│   │   ├── login_screen.dart
-│   │   └── register_screen.dart
-│   ├── home/
-│   │   └── home_screen.dart
-│   ├── recommendations/
-│   │   └── recommendation_screen.dart
-│   ├── process/
-│   │   └── process_screen.dart
-│   ├── advisor/
-│   │   └── advisor_screen.dart
-│   ├── scanner/
-│   │   └── scanner_screen.dart
-│   └── profile/
-│       └── profile_screen.dart
-├── widgets/                 # Reusable widgets
+├── main.dart                 # App entry point and navigation
+├── screens/                  # All screen widgets
+│   ├── home_screen.dart
+│   ├── process_screen.dart
+│   ├── season_screen.dart
+│   ├── profile_screen.dart
+│   ├── ai_advisor_screen.dart
+│   └── crop_health_scanner_screen.dart
+├── widgets/                  # Reusable widget components
 │   ├── weather_card.dart
-│   ├── action_button.dart
+│   ├── quick_action_button.dart
 │   ├── alert_card.dart
 │   └── recommendation_card.dart
-└── utils/                   # Utilities
-    └── theme.dart
+└── utils/                    # Utilities and constants
+    └── colors.dart
 ```
 
 ## Getting Started
@@ -75,74 +79,98 @@ lib/
 ### Prerequisites
 
 - Flutter SDK (3.0.0 or higher)
-- Dart SDK
-- Android Studio / VS Code
-- Android SDK
-- Supabase account
+- Dart SDK (3.0.0 or higher)
+- Android Studio / VS Code with Flutter extensions
+- Android SDK / iOS SDK (depending on target platform)
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository
+2. Navigate to the project directory
+3. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+4. Run the app:
+   ```bash
+   flutter run
+   ```
+
+### Running on Different Platforms
+
+**Android:**
 ```bash
-git clone <repository-url>
-cd cropsense_ai
+flutter run -d android
 ```
 
-2. Install dependencies:
+**iOS:**
 ```bash
-flutter pub get
+flutter run -d ios
 ```
 
-3. Create a `.env` file in the project root and add your Supabase credentials:
-```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. Run the application:
+**Web:**
 ```bash
-flutter run
+flutter run -d chrome
 ```
 
-## Research Context
+## Next Steps (Backend Integration)
 
-This application is part of a BSc. Software Engineering research project by Diana RUZINDANA, supervised by Marvin Muyonga Ogore (January 2026).
+The current implementation uses static data. To integrate with a backend:
 
-### Research Objectives
+1. **API Integration**
+   - Set up HTTP client (dio/http package)
+   - Create API service layer
+   - Implement data models
 
-1. Conduct systematic literature review of agricultural advisory systems
-2. Design and develop a localized crop and seed decision support system
-3. Evaluate system effectiveness and user adoption potential
+2. **State Management**
+   - Implement Provider/Riverpod/Bloc
+   - Handle loading/error states
+   - Cache management
 
-### Target Users
+3. **Authentication**
+   - User login/registration
+   - Token management
+   - Secure storage
 
-Smallholder farmers in Bugesera District, Rwanda (pilot study with 15-20 farmers)
+4. **Real-time Weather Data**
+   - Integrate weather APIs
+   - Location services
+   - Periodic updates
 
-## Development Status
+5. **AI Model Integration**
+   - Connect to recommendation engine
+   - Image processing for disease detection
+   - TensorFlow Lite integration
 
-### Completed Features
-- Authentication system (login/register)
-- Home dashboard with weather information
-- Quick action buttons
-- Crop recommendation screen
-- Process tracking screen
-- AI advisor chatbot interface
-- Crop health scanner (image-based)
-- Profile management
+6. **Database**
+   - Local storage (SQLite/Hive)
+   - Offline mode support
+   - Data synchronization
 
-### Planned Features
-- Weather API integration
-- Machine learning model for disease detection
-- Rule-based expert system for crop recommendations
-- Multi-language support (English & Kinyarwanda)
-- Offline functionality
-- Push notifications for alerts
+## Design System
+
+### Colors
+- Primary: `#00C853` (Green)
+- Primary Dark: `#00A843`
+- Background: `#F5F7FA`
+- Text Primary: `#1A1A1A`
+- Text Secondary: `#757575`
+
+### Typography
+- Font Family: Inter (via Google Fonts)
+- Heading: Bold, 18-24px
+- Body: Regular, 14-16px
+- Caption: Regular, 12-13px
+
+## Contributing
+
+This project is part of a BSc. Software Engineering thesis project by Diana RUZINDANA.
 
 ## License
 
-This project is part of academic research at the institution.
+All rights reserved.
 
 ## Contact
 
-Diana RUZINDANA
-BSc. Software Engineering Student
+For questions or support, please contact the development team.
