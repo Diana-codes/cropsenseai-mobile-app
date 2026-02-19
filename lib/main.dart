@@ -4,9 +4,14 @@ import 'screens/home_screen.dart';
 import 'screens/process_screen.dart';
 import 'screens/season_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/login_screen.dart';
+import 'services/supabase_service.dart';
+import 'services/auth_service.dart';
 import 'utils/colors.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseService.initialize();
   runApp(const CropSenseApp());
 }
 
@@ -26,7 +31,35 @@ class CropSenseApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(),
         useMaterial3: true,
       ),
-      home: const MainNavigator(),
+      home: const AuthWrapper(),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = AuthService();
+
+    return StreamBuilder(
+      stream: authService.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (authService.isAuthenticated) {
+          return const MainNavigator();
+        }
+
+        return const LoginScreen();
+      },
     );
   }
 }

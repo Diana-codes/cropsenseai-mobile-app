@@ -1,11 +1,75 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
+import '../services/auth_service.dart';
+import 'edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _authService = AuthService();
+  Map<String, dynamic>? _profile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await _authService.getUserProfile();
+    setState(() {
+      _profile = profile;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _handleLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _authService.signOut();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final userName = _profile?['full_name'] ?? 'User';
+    final userEmail = _authService.currentUser?.email ?? '';
+    final phone = _profile?['phone'] ?? '';
+    final district = _profile?['district'] ?? '';
+    final province = _profile?['province'] ?? '';
+    final landSize = _profile?['land_size'] ?? 0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -15,7 +79,7 @@ class ProfileScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Mr. Uwimana',
+                userName,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -44,9 +108,9 @@ class ProfileScreen extends StatelessWidget {
                       child: Icon(Icons.person, color: Colors.white, size: 40),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Mr. Uwimana',
-                      style: TextStyle(
+                    Text(
+                      userName,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -62,7 +126,9 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Bugesera • 5 hectares',
+                          district.isNotEmpty
+                              ? '$district ${landSize > 0 ? '• $landSize hectares' : ''}'
+                              : 'Location not set',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
@@ -73,19 +139,32 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     const Divider(),
                     const SizedBox(height: 20),
-                    _buildProfileItem(Icons.phone, '+250 788 123 456'),
+                    if (phone.isNotEmpty) ...[
+                      _buildProfileItem(Icons.phone, phone),
+                      const SizedBox(height: 12),
+                    ],
+                    _buildProfileItem(Icons.email, userEmail),
                     const SizedBox(height: 12),
-                    _buildProfileItem(Icons.email, 'uwimana@email.rw'),
-                    const SizedBox(height: 12),
-                    _buildProfileItem(
-                      Icons.location_city,
-                      'Bugesera District, Eastern Province',
-                    ),
+                    if (district.isNotEmpty && province.isNotEmpty)
+                      _buildProfileItem(
+                        Icons.location_city,
+                        '$district, $province',
+                      ),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(profile: _profile),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadProfile();
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -128,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: TextButton.icon(
-                  onPressed: () {},
+                  onPressed: _handleLogout,
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.danger,
                     padding: const EdgeInsets.symmetric(vertical: 14),

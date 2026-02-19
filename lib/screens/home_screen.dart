@@ -7,6 +7,8 @@ import '../widgets/recommendation_card.dart';
 import 'ai_advisor_screen_enhanced.dart';
 import 'crop_health_scanner_screen.dart';
 import 'season_planning_screen.dart';
+import 'process_screen.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +19,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _showAllRecommendations = false;
+  final _authService = AuthService();
+  Map<String, dynamic>? _profile;
+  bool _isLoadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await _authService.getUserProfile();
+    setState(() {
+      _profile = profile;
+      _isLoadingProfile = false;
+    });
+  }
 
   final List<Map<String, dynamic>> _allRecommendations = [
     {
@@ -51,6 +70,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userName = _profile?['full_name'] ?? 'User';
+    final district = _profile?['district'] ?? '';
+    final province = _profile?['province'] ?? '';
+    final locationText = district.isNotEmpty && province.isNotEmpty
+        ? '$district, $province'
+        : 'Location not set';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -66,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Mr. Uwimana',
+                        userName,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -75,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Bugesera District, Eastern Province',
+                        locationText,
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -92,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 24),
               WeatherCard(
-                location: 'Bugesera, Rwanda',
+                location: district.isNotEmpty ? '$district, Rwanda' : 'Rwanda',
                 temperature: 24,
                 condition: '☁️ Partly Cloudy',
                 humidity: 65,
@@ -175,7 +201,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     subtitle: 'View stages',
                     color: Colors.blue.shade50,
                     iconColor: Colors.blue,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProcessScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
