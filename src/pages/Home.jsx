@@ -89,77 +89,16 @@ const Home = () => {
           </div>
         </button>
 
-        <button className="quick-action-btn" onClick={() => navigate('/crop-scanner')}>
-          <div className="action-icon" style={{background: 'rgba(255, 152, 0, 0.1)'}}>
-            <span style={{color: 'var(--warning)'}}>🌾</span>
-          </div>
-          <div className="action-text">
-            <h4>Crop Health</h4>
-            <p>Scan crops</p>
-          </div>
-        </button>
-
-        <button className="quick-action-btn" onClick={() => navigate('/ai-advisor')}>
-          <div className="action-icon" style={{background: 'rgba(156, 39, 176, 0.1)'}}>
-            <span style={{color: 'var(--purple)'}}>💡</span>
-          </div>
-          <div className="action-text">
-            <h4>Get Advice</h4>
-            <p>AI advisor</p>
-          </div>
-        </button>
-
         <button className="quick-action-btn" onClick={() => navigate('/process')}>
-          <div className="action-icon" style={{background: 'rgba(33, 150, 243, 0.1)'}}>
-            <span style={{color: 'var(--info)'}}>📋</span>
+          <div className="action-icon" style={{background: 'rgba(244, 67, 54, 0.1)'}}>
+            <span style={{color: '#f44336'}}>💼</span>
           </div>
           <div className="action-text">
-            <h4>My Process</h4>
-            <p>View stages</p>
+            <h4>Track Jobs</h4>
+            <p>Monitor tasks</p>
           </div>
         </button>
       </div>
-
-      <h3 className="section-title">Alerts & Recommendations</h3>
-      <div className="alert-card warning">
-        <div className="alert-icon">⚠️</div>
-        <div className="alert-content">
-          <h4>Heavy rainfall expected</h4>
-          <p>This week: Postpone planting until water...</p>
-          <button className="alert-action">Prepare field</button>
-        </div>
-      </div>
-
-      <div className="recommendations-header">
-        <h3 className="section-title">Recommended for</h3>
-        <button
-          className="see-all-btn"
-          onClick={() => setShowAllRecommendations(!showAllRecommendations)}
-        >
-          {showAllRecommendations ? 'Show less' : 'See all'}
-        </button>
-      </div>
-      <p className="section-subtitle">This season</p>
-
-      {displayedRecommendations.map((rec, index) => (
-        <div key={index} className="recommendation-card">
-          <div className="rec-icon">{rec.icon}</div>
-          <div className="rec-content">
-            <h4>{rec.title}</h4>
-            <p>{rec.description}</p>
-            <div className="rec-badges">
-              {rec.badges.map((badge, idx) => (
-                <span
-                  key={idx}
-                  className={`badge ${badge.type === 'success' ? 'badge-success' : badge.type === 'warning' ? 'badge-warning' : ''}`}
-                >
-                  {badge.text}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
