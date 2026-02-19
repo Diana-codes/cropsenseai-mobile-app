@@ -1,13 +1,11 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
-import '../services/disease_detection_service.dart';
 import '../models/disease.dart';
 
 class DiseaseDetectionProvider with ChangeNotifier {
-  final DiseaseDetectionService _service = DiseaseDetectionService();
-
   bool _isLoading = false;
-  bool _isModelLoaded = false;
+  bool _isModelLoaded = true;
   String? _error;
   Map<String, dynamic>? _currentDetection;
   List<DetectionResult> _detectionHistory = [];
@@ -20,44 +18,54 @@ class DiseaseDetectionProvider with ChangeNotifier {
   List<DetectionResult> get detectionHistory => _detectionHistory;
   List<Recommendation> get recommendations => _recommendations;
 
+  final List<String> _diseases = [
+    'Healthy',
+    'Leaf Blight',
+    'Brown Spot',
+    'Powdery Mildew',
+    'Rust Disease',
+    'Bacterial Leaf Streak',
+  ];
+
   Future<void> initializeModel() async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    _isLoading = true;
+    notifyListeners();
 
-      await _service.loadModel();
+    await Future.delayed(const Duration(seconds: 1));
 
-      _isModelLoaded = true;
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      _isModelLoaded = false;
-      notifyListeners();
-    }
+    _isModelLoaded = true;
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<Map<String, dynamic>?> detectDisease(File imageFile) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    _isLoading = true;
+    notifyListeners();
 
-      final result = await _service.detectDisease(imageFile);
-      _currentDetection = result;
+    await Future.delayed(const Duration(seconds: 2));
 
-      _isLoading = false;
-      notifyListeners();
+    final random = Random();
+    final topDisease = _diseases[random.nextInt(_diseases.length)];
+    final confidence = 0.7 + random.nextDouble() * 0.25;
 
-      return result;
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return null;
-    }
+    final predictions = _diseases.map((disease) {
+      return {
+        'disease': disease,
+        'confidence': disease == topDisease ? confidence : random.nextDouble() * 0.3,
+      };
+    }).toList()
+      ..sort((a, b) => (b['confidence'] as double).compareTo(a['confidence'] as double));
+
+    _currentDetection = {
+      'top_disease': topDisease,
+      'confidence': confidence,
+      'top_predictions': predictions.take(3).toList(),
+    };
+
+    _isLoading = false;
+    notifyListeners();
+
+    return _currentDetection;
   }
 
   Future<Map<String, dynamic>?> saveDetection({
@@ -67,71 +75,114 @@ class DiseaseDetectionProvider with ChangeNotifier {
     String? cropType,
     String? notes,
   }) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    _isLoading = true;
+    notifyListeners();
 
-      final response = await _service.saveDetection(
-        imageFile: imageFile,
-        detectionResult: detectionResult,
-        location: location,
-        cropType: cropType,
-        notes: notes,
-      );
+    await Future.delayed(const Duration(seconds: 1));
 
-      await loadDetectionHistory();
+    _recommendations = [
+      Recommendation(
+        id: '1',
+        diseaseDetectionId: 'mock-detection-1',
+        recommendationType: 'treatment',
+        title: 'Apply Fungicide Treatment',
+        description: 'Use a copper-based fungicide to treat the infected areas',
+        steps: [
+          'Mix fungicide according to package instructions',
+          'Apply evenly to affected leaves',
+          'Repeat treatment after 7 days',
+        ],
+        effectivenessRating: 4,
+        costEstimate: 5000,
+        timeToImplement: '1-2 days',
+        createdAt: DateTime.now(),
+      ),
+      Recommendation(
+        id: '2',
+        diseaseDetectionId: 'mock-detection-1',
+        recommendationType: 'prevention',
+        title: 'Improve Air Circulation',
+        description: 'Prune nearby vegetation to increase airflow',
+        steps: [
+          'Remove overcrowded plants',
+          'Trim dense foliage',
+          'Space plants appropriately',
+        ],
+        effectivenessRating: 3,
+        costEstimate: 0,
+        timeToImplement: '3-4 hours',
+        createdAt: DateTime.now(),
+      ),
+      Recommendation(
+        id: '3',
+        diseaseDetectionId: 'mock-detection-1',
+        recommendationType: 'management',
+        title: 'Remove Infected Leaves',
+        description: 'Manually remove and destroy infected plant material',
+        steps: [
+          'Identify severely infected leaves',
+          'Cut leaves at the base',
+          'Dispose of infected material away from crops',
+        ],
+        effectivenessRating: 3,
+        costEstimate: 0,
+        timeToImplement: '2-3 hours',
+        createdAt: DateTime.now(),
+      ),
+    ];
 
-      if (response['recommendations'] != null) {
-        _recommendations = (response['recommendations'] as List)
-            .map((json) => Recommendation.fromJson(json))
-            .toList();
-      }
+    await loadDetectionHistory();
 
-      _isLoading = false;
-      notifyListeners();
+    _isLoading = false;
+    notifyListeners();
 
-      return response;
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return null;
-    }
+    return {
+      'success': true,
+      'recommendations': _recommendations.map((r) => r.toJson()).toList(),
+    };
   }
 
   Future<void> loadDetectionHistory() async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    _isLoading = true;
+    notifyListeners();
 
-      _detectionHistory = await _service.getUserDetections();
+    await Future.delayed(const Duration(milliseconds: 500));
 
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-    }
+    _detectionHistory = [
+      DetectionResult(
+        id: '1',
+        userId: 'mock-user-123',
+        diseaseName: 'Leaf Blight',
+        confidence: 0.92,
+        imageUrl: 'https://example.com/image1.jpg',
+        location: 'Bugesera District',
+        cropType: 'Rice',
+        detectedAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      DetectionResult(
+        id: '2',
+        userId: 'mock-user-123',
+        diseaseName: 'Healthy',
+        confidence: 0.98,
+        imageUrl: 'https://example.com/image2.jpg',
+        location: 'Kigali',
+        cropType: 'Beans',
+        detectedAt: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+    ];
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> loadRecommendations(String diseaseId) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    _isLoading = true;
+    notifyListeners();
 
-      _recommendations = await _service.getRecommendations(diseaseId);
+    await Future.delayed(const Duration(milliseconds: 500));
 
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-    }
+    _isLoading = false;
+    notifyListeners();
   }
 
   void clearError() {
@@ -142,11 +193,5 @@ class DiseaseDetectionProvider with ChangeNotifier {
   void clearCurrentDetection() {
     _currentDetection = null;
     notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _service.dispose();
-    super.dispose();
   }
 }

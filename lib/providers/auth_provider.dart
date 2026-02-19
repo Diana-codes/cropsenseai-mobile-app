@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final SupabaseClient _supabase = Supabase.instance.client;
-  User? _currentUser;
+  Map<String, dynamic>? _currentUser;
   bool _isLoading = false;
 
-  User? get currentUser => _currentUser;
+  Map<String, dynamic>? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _currentUser != null;
 
   AuthProvider() {
-    _initAuthListener();
-  }
-
-  void _initAuthListener() {
-    _supabase.auth.onAuthStateChange.listen((data) {
-      (async () {
-        _currentUser = data.session?.user;
-        notifyListeners();
-      })();
-    });
+    _currentUser = {
+      'id': 'mock-user-123',
+      'email': 'farmer@example.com',
+      'full_name': 'Mr. Uwimana',
+    };
   }
 
   Future<bool> signIn(String email, String password) async {
@@ -28,12 +21,14 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final response = await _supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      await Future.delayed(const Duration(seconds: 1));
 
-      _currentUser = response.user;
+      _currentUser = {
+        'id': 'mock-user-123',
+        'email': email,
+        'full_name': 'Mr. Uwimana',
+      };
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -49,13 +44,14 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final response = await _supabase.auth.signUp(
-        email: email,
-        password: password,
-        data: {'full_name': fullName},
-      );
+      await Future.delayed(const Duration(seconds: 1));
 
-      _currentUser = response.user;
+      _currentUser = {
+        'id': 'mock-user-123',
+        'email': email,
+        'full_name': fullName,
+      };
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -67,7 +63,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _supabase.auth.signOut();
+    await Future.delayed(const Duration(milliseconds: 500));
     _currentUser = null;
     notifyListeners();
   }

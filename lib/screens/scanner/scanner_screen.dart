@@ -24,12 +24,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<DiseaseDetectionProvider>();
-      if (!provider.isModelLoaded) {
-        provider.initializeModel();
-      }
-    });
   }
 
   @override
