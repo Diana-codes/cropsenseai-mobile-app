@@ -83,7 +83,7 @@ class DiseaseDetectionProvider with ChangeNotifier {
     _recommendations = [
       Recommendation(
         id: '1',
-        diseaseDetectionId: 'mock-detection-1',
+        diseaseId: 'mock-disease-1',
         recommendationType: 'treatment',
         title: 'Apply Fungicide Treatment',
         description: 'Use a copper-based fungicide to treat the infected areas',
@@ -92,14 +92,15 @@ class DiseaseDetectionProvider with ChangeNotifier {
           'Apply evenly to affected leaves',
           'Repeat treatment after 7 days',
         ],
+        products: [],
+        organicOptions: ['Neem oil', 'Copper sulfate solution'],
         effectivenessRating: 4,
         costEstimate: 5000,
-        timeToImplement: '1-2 days',
-        createdAt: DateTime.now(),
+        priority: 1,
       ),
       Recommendation(
         id: '2',
-        diseaseDetectionId: 'mock-detection-1',
+        diseaseId: 'mock-disease-1',
         recommendationType: 'prevention',
         title: 'Improve Air Circulation',
         description: 'Prune nearby vegetation to increase airflow',
@@ -108,14 +109,15 @@ class DiseaseDetectionProvider with ChangeNotifier {
           'Trim dense foliage',
           'Space plants appropriately',
         ],
+        products: [],
+        organicOptions: [],
         effectivenessRating: 3,
         costEstimate: 0,
-        timeToImplement: '3-4 hours',
-        createdAt: DateTime.now(),
+        priority: 2,
       ),
       Recommendation(
         id: '3',
-        diseaseDetectionId: 'mock-detection-1',
+        diseaseId: 'mock-disease-1',
         recommendationType: 'management',
         title: 'Remove Infected Leaves',
         description: 'Manually remove and destroy infected plant material',
@@ -124,10 +126,11 @@ class DiseaseDetectionProvider with ChangeNotifier {
           'Cut leaves at the base',
           'Dispose of infected material away from crops',
         ],
+        products: [],
+        organicOptions: [],
         effectivenessRating: 3,
         costEstimate: 0,
-        timeToImplement: '2-3 hours',
-        createdAt: DateTime.now(),
+        priority: 2,
       ),
     ];
 
@@ -138,7 +141,7 @@ class DiseaseDetectionProvider with ChangeNotifier {
 
     return {
       'success': true,
-      'recommendations': _recommendations.map((r) => r.toJson()).toList(),
+      'recommendations': _recommendations,
     };
   }
 
@@ -152,22 +155,33 @@ class DiseaseDetectionProvider with ChangeNotifier {
       DetectionResult(
         id: '1',
         userId: 'mock-user-123',
-        diseaseName: 'Leaf Blight',
-        confidence: 0.92,
+        diseaseId: 'disease-1',
         imageUrl: 'https://example.com/image1.jpg',
+        confidenceScore: 0.92,
+        topPredictions: [
+          PredictionScore(disease: 'Leaf Blight', confidence: 0.92),
+          PredictionScore(disease: 'Brown Spot', confidence: 0.05),
+          PredictionScore(disease: 'Healthy', confidence: 0.03),
+        ],
         location: 'Bugesera District',
         cropType: 'Rice',
-        detectedAt: DateTime.now().subtract(const Duration(days: 2)),
+        status: 'completed',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
       ),
       DetectionResult(
         id: '2',
         userId: 'mock-user-123',
-        diseaseName: 'Healthy',
-        confidence: 0.98,
         imageUrl: 'https://example.com/image2.jpg',
+        confidenceScore: 0.98,
+        topPredictions: [
+          PredictionScore(disease: 'Healthy', confidence: 0.98),
+          PredictionScore(disease: 'Leaf Blight', confidence: 0.01),
+          PredictionScore(disease: 'Brown Spot', confidence: 0.01),
+        ],
         location: 'Kigali',
         cropType: 'Beans',
-        detectedAt: DateTime.now().subtract(const Duration(days: 5)),
+        status: 'completed',
+        createdAt: DateTime.now().subtract(const Duration(days: 5)),
       ),
     ];
 

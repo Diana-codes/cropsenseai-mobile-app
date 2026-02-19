@@ -183,4 +183,20 @@ class Recommendation {
       priority: json['priority'] as int? ?? 1,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'disease_id': diseaseId,
+      'recommendation_type': recommendationType,
+      'title': title,
+      'description': description,
+      'steps': steps,
+      'products': products,
+      'organic_options': organicOptions,
+      'cost_estimate': costEstimate,
+      'effectiveness_rating': effectivenessRating,
+      'priority': priority,
+    };
+  }
 }
