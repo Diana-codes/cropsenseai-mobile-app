@@ -1,3 +1,5 @@
+node_modules
+
 # Web/React frontend (removed to reduce repo size)
 node_modules/
 src/
@@ -5,6 +7,7 @@ package.json
 package-lock.json
 vite.config.js
 index.html
+web/
 
 # Python
 .venv/
@@ -31,15 +34,18 @@ build/
 .pub/
 *.iml
 
-# Model files (too large for git - use Hugging Face instead)
-outputs/*.keras
-outputs/*.pkl
-outputs/*.h5
-outputs/*.pb
-outputs/*.tflite
+# Model files and outputs (too large for git - use Hugging Face instead)
+outputs/
+*.ipynb
+*.ipynb_checkpoints
 
 # Hugging Face cache
 .hf_cache/
+
+# Test scripts (optional - uncomment to exclude from production)
+# test_*.sh
+# debug_*.py
+# *_test.py
 
 # IDE
 .vscode/

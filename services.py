@@ -296,6 +296,9 @@ class RwandaCropPlanner:
         try:
             with open(csv_path, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
+                # Skip the second header row (sub-headers like "Day", "Month")
+                next(reader, None)
+                # Read actual data rows
                 self._rows = list(reader)
             print(f"✓ Loaded crop calendar data from {csv_path} ({len(self._rows)} rows)")
         except Exception as e:
@@ -353,14 +356,41 @@ class RwandaCropPlanner:
             if zone and agro != zone:
                 continue
 
+            # CSV structure: "Early Sowing" (Day), "" (Month), "Later Sowing" (Day), "" (Month)
+            # The month values are in the empty key columns immediately after "Early Sowing" and "Later Sowing"
             try:
-                early_month = int(row.get("Early Sowing Month") or row.get(" Early Sowing Month") or 0)
-            except ValueError:
+                # Get ordered fieldnames to find column indices
+                # We need to access the row as a list to preserve order
+                row_list = list(row.items())
+                fieldnames = list(row.keys())
+                
+                # Find index of "Early Sowing", month is at index+1
+                if "Early Sowing" in fieldnames:
+                    early_idx = fieldnames.index("Early Sowing")
+                    if early_idx + 1 < len(row_list):
+                        early_month_str = row_list[early_idx + 1][1] or ""
+                        early_month = int(early_month_str.strip()) if early_month_str.strip() else 0
+                    else:
+                        early_month = 0
+                else:
+                    early_month = 0
+            except (ValueError, IndexError, TypeError):
                 early_month = 0
 
             try:
-                late_month = int(row.get("Later Sowing Month") or row.get(" Later Sowing Month") or 0)
-            except ValueError:
+                # Find index of "Later Sowing", month is at index+1
+                row_list = list(row.items())
+                fieldnames = list(row.keys())
+                if "Later Sowing" in fieldnames:
+                    late_idx = fieldnames.index("Later Sowing")
+                    if late_idx + 1 < len(row_list):
+                        late_month_str = row_list[late_idx + 1][1] or ""
+                        late_month = int(late_month_str.strip()) if late_month_str.strip() else 0
+                    else:
+                        late_month = 0
+                else:
+                    late_month = 0
+            except (ValueError, IndexError, TypeError):
                 late_month = 0
 
             # If sowing window overlaps with desired season months

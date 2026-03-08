@@ -162,18 +162,19 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
               ],
               if (_sector.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _buildDropdown('Cell', _cell, RwandaLocations.getCells(_province, _district, _sector), (value) {
+                _buildDropdown('Cell (Optional)', _cell, RwandaLocations.getCells(_province, _district, _sector), (value) {
                   setState(() {
-                    _cell = value!;
+                    _cell = value ?? '';
                     _village = '';
                   });
                 }),
               ],
+              // Village can be selected if cell is selected
               if (_cell.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _buildDropdown('Village', _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
+                _buildDropdown('Village (Optional)', _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
                   setState(() {
-                    _village = value!;
+                    _village = value ?? '';
                   });
                 }),
               ],
@@ -223,8 +224,6 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                   onPressed: _province.isNotEmpty &&
                           _district.isNotEmpty &&
                           _sector.isNotEmpty &&
-                          _cell.isNotEmpty &&
-                          _village.isNotEmpty &&
                           _season.isNotEmpty
                       ? () {
                           setState(() {
