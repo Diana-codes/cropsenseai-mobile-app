@@ -627,7 +627,7 @@ Output: `build/web/`
 - **API Documentation**: `https://api.cropsense-ai.com/docs`
 
 #### Model Repository
-- **Hugging Face Model**: [View Model](https://huggingface.co/your-username/cropsense-mobilenetv2)
+- **Hugging Face Model**: [View Model](https://huggingface.co/Ruzindana/cropsense-mobilenetv2)
 
 ---
 
@@ -700,7 +700,7 @@ All rights reserved. This project is proprietary software.
 
 For questions, issues, or support:
 - **GitHub Issues**: [Create an issue](https://github.com/Diana-codes/cropsenseai-mobile-app/issues)
-- **Email**: [Your email address]
+- **Email**: [dianaruzindana8@gmail.com]
 
 ---
 
