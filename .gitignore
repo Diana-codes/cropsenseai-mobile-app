@@ -1,0 +1,58 @@
+# Web/React frontend (removed to reduce repo size)
+node_modules/
+src/
+package.json
+package-lock.json
+vite.config.js
+index.html
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Flutter
+build/
+.dart_tool/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+*.iml
+
+# Model files (too large for git - use Hugging Face instead)
+outputs/*.keras
+outputs/*.pkl
+outputs/*.h5
+outputs/*.pb
+outputs/*.tflite
+
+# Hugging Face cache
+.hf_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
