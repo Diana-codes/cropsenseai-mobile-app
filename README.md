@@ -1,176 +1,729 @@
-# CropSense AI
+# CropSense AI 🌾
 
-AI-Driven Decision Support for Climate-Resilient Smallholder Farming in Rwanda
+**AI-Driven Decision Support for Climate-Resilient Smallholder Farming in Rwanda**
 
-## Overview
+[![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter)](https://flutter.dev)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
 
-CropSense AI is a mobile application designed to help smallholder farmers in Rwanda make informed decisions about crop selection, planting times, and farm management. The app provides AI-powered recommendations based on climate data, soil conditions, and historical farming data.
+---
 
-## Features
+## 📱 Overview
 
-### Current Implementation
+CropSense AI is a comprehensive mobile application designed to empower smallholder farmers in Rwanda with AI-powered agricultural insights. The app provides real-time crop disease detection, personalized crop recommendations based on location and weather, and season planning tools to optimize farming decisions.
 
-1. **Home Dashboard**
+### Key Capabilities
+
+- 🔍 **Crop Disease Detection**: Upload leaf images for instant AI-powered disease identification
+- 🌾 **AI Crop Advisor**: Get personalized crop recommendations based on location, season, and land type
+- 📅 **Season Planning**: Plan your farming season with location-specific recommendations
+- 🌤️ **Weather Integration**: Real-time weather data for informed decision-making
+- 📍 **Location-Based Services**: Full Rwanda administrative hierarchy (Province → District → Sector → Cell → Village)
+
+---
+
+## ✨ Features
+
+### Core Functionalities
+
+1. **Crop Health Scanner**
+   - Upload leaf images via camera or gallery
+   - AI-powered disease detection (Healthy, Powdery, Rust)
+   - Confidence scores and detailed recommendations
+   - Weather-based agronomic advice
+
+2. **AI Crop Advisor**
+   - Location-based crop recommendations
+   - Weather-integrated suggestions
+   - Season-specific planning (Season A/B)
+   - Land type considerations (Wetland, Hillside, Valley, Plateau)
+
+3. **Season Planning**
+   - Multi-step planning wizard
+   - Location selection with full Rwanda hierarchy
+   - Crop recommendations with weather data
+   - Land size and type configuration
+
+4. **Home Dashboard**
    - Real-time weather information
-   - Quick action buttons for common tasks
-   - Alerts and recommendations
-   - Personalized crop suggestions
-
-2. **Process Management**
-   - Track cultivation stages
-   - View detailed process information
-   - Stage-by-stage guidance
-   - Progress tracking
-
-3. **Season Tracking**
-   - Current season overview
+   - Quick action buttons
+   - Personalized alerts and recommendations
    - Performance statistics
-   - Historical data
-   - Farmer achievements
 
-4. **User Profile**
+5. **User Profile Management**
    - Farmer information management
    - Settings and preferences
-   - Contact information
+   - Authentication via Supabase
 
-5. **AI Crop Advisor**
-   - Personalized crop recommendations
-   - Location-based suggestions
-   - Soil type consideration
-   - Season-specific advice
+---
 
-6. **Crop Health Scanner**
-   - Disease detection guidance
-   - Photo upload functionality
-   - Common disease information
-   - Treatment recommendations
+## 🛠️ Tech Stack
 
-## Tech Stack
-
-- **Framework**: Flutter
-- **Language**: Dart
+### Frontend (Mobile App)
+- **Framework**: Flutter 3.0+
+- **Language**: Dart 3.0+
 - **UI**: Material Design 3
-- **Fonts**: Google Fonts (Inter)
-- **State Management**: StatefulWidget (can be upgraded to Provider/Riverpod later)
+- **State Management**: StatefulWidget
+- **HTTP Client**: `http` package
+- **Image Picker**: `image_picker` package
+- **Authentication**: Supabase Flutter
 
-## Project Structure
+### Backend (API)
+- **Framework**: FastAPI 0.115
+- **Language**: Python 3.12+
+- **ML Framework**: TensorFlow/Keras
+- **Model Hosting**: Hugging Face (optional)
+- **Weather API**: Open-Meteo API
+- **Server**: Uvicorn
 
-```
-lib/
-├── main.dart                 # App entry point and navigation
-├── screens/                  # All screen widgets
-│   ├── home_screen.dart
-│   ├── process_screen.dart
-│   ├── season_screen.dart
-│   ├── profile_screen.dart
-│   ├── ai_advisor_screen.dart
-│   └── crop_health_scanner_screen.dart
-├── widgets/                  # Reusable widget components
-│   ├── weather_card.dart
-│   ├── quick_action_button.dart
-│   ├── alert_card.dart
-│   └── recommendation_card.dart
-└── utils/                    # Utilities and constants
-    └── colors.dart
-```
+### Data
+- **Crop Calendar**: CSV-based Rwanda crop calendar
+- **Location Data**: Hierarchical Rwanda administrative data
+- **ML Model**: MobileNetV2 (for disease detection)
 
-## Getting Started
+---
 
-### Prerequisites
+## 📋 Prerequisites
 
-- Flutter SDK (3.0.0 or higher)
-- Dart SDK (3.0.0 or higher)
-- Android Studio / VS Code with Flutter extensions
-- Android SDK / iOS SDK (depending on target platform)
+Before you begin, ensure you have the following installed:
 
-### Installation
+### Required Software
 
-1. Clone the repository
-2. Navigate to the project directory
-3. Install dependencies:
+1. **Flutter SDK** (3.0.0 or higher)
    ```bash
-   flutter pub get
+   flutter --version
    ```
 
-4. Run the app:
+2. **Dart SDK** (3.0.0 or higher - comes with Flutter)
+
+3. **Python** (3.12 or higher)
    ```bash
-   flutter run
+   python3 --version
    ```
 
-### Running on Different Platforms
+4. **Git**
+   ```bash
+   git --version
+   ```
 
-**Android:**
+### Platform-Specific Requirements
+
+**For Android Development:**
+- Android Studio
+- Android SDK (API level 21+)
+- Android Emulator or physical device
+
+**For iOS Development (macOS only):**
+- Xcode 14+
+- CocoaPods
+- iOS Simulator or physical device
+
+**For Web Development:**
+- Chrome browser (for testing)
+
+### Optional Tools
+- VS Code with Flutter extensions (recommended)
+- Postman or curl (for API testing)
+
+---
+
+## 🚀 Installation
+
+Follow these step-by-step instructions to set up the project:
+
+### Step 1: Clone the Repository
+
 ```bash
-flutter run -d android
+git clone https://github.com/Diana-codes/cropsenseai-mobile-app.git
+cd cropsenseai-mobile-app
 ```
 
-**iOS:**
+### Step 2: Set Up Backend (FastAPI)
+
+#### 2.1 Create Virtual Environment
+
 ```bash
-flutter run -d ios
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows:
+# .venv\Scripts\activate
 ```
 
-**Web:**
+#### 2.2 Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 2.3 Set Up ML Model
+
+**Option A: Use Local Model (Default)**
+- Ensure `outputs/best_MobileNetV2.keras` exists
+- Ensure `outputs/model_metadata.json` exists
+
+**Option B: Use Hugging Face (Recommended for Production)**
+```bash
+# Install Hugging Face CLI
+pip install huggingface_hub
+
+# Login to Hugging Face
+huggingface-cli login
+
+# Upload your model (see HUGGINGFACE_SETUP.md for details)
+python upload_to_hf.py your-username/cropsense-mobilenetv2
+
+# Set environment variable
+export HUGGINGFACE_MODEL_ID="your-username/cropsense-mobilenetv2"
+```
+
+### Step 3: Set Up Flutter Mobile App
+
+#### 3.1 Install Flutter Dependencies
+
+```bash
+flutter pub get
+```
+
+#### 3.2 Configure API Base URL (Optional)
+
+The app defaults to `http://localhost:8000` for web. For Android emulator, use:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+```
+
+For physical devices, use your computer's IP address:
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.100:8000
+```
+
+### Step 4: Verify Installation
+
+```bash
+# Check Flutter setup
+flutter doctor
+
+# Verify Python environment
+python --version
+pip list | grep fastapi
+```
+
+---
+
+## 🏃 Running the Application
+
+### Backend Setup
+
+#### Start the Backend Server
+
+**Option 1: Using the Helper Script**
+```bash
+./start_backend.sh
+```
+
+**Option 2: Manual Start**
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Start the server
+python main.py
+```
+
+You should see:
+```
+✓ Model loaded successfully from outputs/best_MobileNetV2.keras
+✓ Loaded class names from outputs/model_metadata.json: ['Healthy', 'Powdery', 'Rust']
+INFO:     Uvicorn running on http://0.0.0.0:8000
+```
+
+**Keep this terminal open!** The backend must stay running.
+
+#### Verify Backend is Running
+
+Open a new terminal and test:
+```bash
+curl http://localhost:8000/
+```
+
+Expected response:
+```json
+{
+  "status": "CropSense AI API is running",
+  "version": "1.0.0",
+  "model_loaded": true,
+  "encoder_loaded": false
+}
+```
+
+### Mobile App Setup
+
+#### Run on Web (Easiest for Testing)
+
 ```bash
 flutter run -d chrome
 ```
 
-## Next Steps (Backend Integration)
+#### Run on Android Emulator
 
-The current implementation uses static data. To integrate with a backend:
+1. Start Android Emulator:
+   ```bash
+   flutter emulators --launch <emulator_id>
+   ```
 
-1. **API Integration**
-   - Set up HTTP client (dio/http package)
-   - Create API service layer
-   - Implement data models
+2. Run the app:
+   ```bash
+   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+   ```
 
-2. **State Management**
-   - Implement Provider/Riverpod/Bloc
-   - Handle loading/error states
-   - Cache management
+#### Run on Physical Android Device
 
-3. **Authentication**
-   - User login/registration
-   - Token management
-   - Secure storage
+1. Enable USB Debugging on your device
+2. Connect via USB
+3. Run:
+   ```bash
+   flutter devices  # Verify device is detected
+   flutter run --dart-define=API_BASE_URL=http://YOUR_COMPUTER_IP:8000
+   ```
 
-4. **Real-time Weather Data**
-   - Integrate weather APIs
-   - Location services
-   - Periodic updates
+#### Run on iOS (macOS only)
 
-5. **AI Model Integration**
-   - Connect to recommendation engine
-   - Image processing for disease detection
-   - TensorFlow Lite integration
+```bash
+flutter run -d ios
+```
 
-6. **Database**
-   - Local storage (SQLite/Hive)
-   - Offline mode support
-   - Data synchronization
+### Quick Test
 
-## Design System
+1. **Test Backend Endpoints:**
+   ```bash
+   ./test_backend.sh
+   ```
 
-### Colors
-- Primary: `#00C853` (Green)
-- Primary Dark: `#00A843`
-- Background: `#F5F7FA`
-- Text Primary: `#1A1A1A`
-- Text Secondary: `#757575`
+2. **Test Image Prediction:**
+   ```bash
+   ./test_image.sh /path/to/your/image.jpg
+   ```
 
-### Typography
-- Font Family: Inter (via Google Fonts)
-- Heading: Bold, 18-24px
-- Body: Regular, 14-16px
-- Caption: Regular, 12-13px
+3. **Test in App:**
+   - Open the Flutter app
+   - Navigate to "Crop Health Scanner"
+   - Upload a leaf image
+   - Verify prediction appears
 
-## Contributing
+---
 
-This project is part of a BSc. Software Engineering thesis project by Diana RUZINDANA.
+## 📁 Project Structure
 
-## License
+```
+cropsenseai-mobile-app/
+├── lib/                          # Flutter mobile app source code
+│   ├── main.dart                # App entry point
+│   ├── screens/                 # Screen widgets
+│   │   ├── home_screen.dart
+│   │   ├── crop_health_scanner_screen.dart
+│   │   ├── ai_advisor_screen_enhanced.dart
+│   │   ├── season_planning_screen.dart
+│   │   ├── profile_screen.dart
+│   │   └── ...
+│   ├── widgets/                 # Reusable components
+│   │   ├── weather_card.dart
+│   │   ├── recommendation_card.dart
+│   │   └── ...
+│   ├── services/                # Service layer
+│   │   ├── auth_service.dart
+│   │   └── supabase_service.dart
+│   ├── data/                    # Data files
+│   │   └── rwanda_locations.dart
+│   └── utils/                   # Utilities
+│       └── colors.dart
+│
+├── main.py                      # FastAPI backend entry point
+├── services.py                  # Backend services (Weather, Advisor, Planner)
+├── requirements.txt             # Python dependencies
+├── pubspec.yaml                 # Flutter dependencies
+│
+├── outputs/                     # ML model files (gitignored)
+│   ├── best_MobileNetV2.keras
+│   └── model_metadata.json
+│
+├── Rwanda_Crop_calendar_Data.csv  # Crop calendar data
+│
+├── Documentation/
+│   ├── QUICK_START.md          # Quick start guide
+│   ├── TESTING_GUIDE.md        # Comprehensive testing guide
+│   ├── HUGGINGFACE_SETUP.md    # Hugging Face deployment guide
+│   └── RUN_COMMANDS.md         # Command reference
+│
+└── Test Scripts/
+    ├── start_backend.sh        # Backend starter script
+    ├── test_backend.sh         # Backend test script
+    ├── test_image.sh           # Image prediction tester
+    └── debug_crops.py          # Crop matching debugger
+```
 
-All rights reserved.
+---
 
-## Contact
+## 🔌 API Endpoints
 
-For questions or support, please contact the development team.
+### Base URL
+- **Local Development**: `http://localhost:8000`
+- **Android Emulator**: `http://10.0.2.2:8000`
+- **Physical Device**: `http://YOUR_COMPUTER_IP:8000`
+
+### Available Endpoints
+
+#### Health Check
+```http
+GET /
+```
+**Response:**
+```json
+{
+  "status": "CropSense AI API is running",
+  "version": "1.0.0",
+  "model_loaded": true,
+  "encoder_loaded": false
+}
+```
+
+#### Crop Disease Prediction
+```http
+POST /predict
+Content-Type: multipart/form-data
+```
+**Request:** Form data with `file` field (image file)
+
+**Response:**
+```json
+{
+  "prediction": "Healthy",
+  "confidence": 95.5,
+  "weather": {
+    "location": "Rwanda",
+    "temperature": 24.1,
+    "humidity": 60,
+    "wind_speed": 13.7
+  },
+  "advice": {
+    "crop": "Healthy",
+    "advice": "Your crop appears healthy...",
+    "additional_tips": [...]
+  }
+}
+```
+
+#### AI Crop Advisor
+```http
+POST /advisor
+Content-Type: application/json
+```
+**Request Body:**
+```json
+{
+  "province": "Eastern Province",
+  "district": "Bugesera",
+  "sector": "Gashora",
+  "cell": "Biryogo",
+  "village": "Akagera",
+  "season": "Season A (Sept - Jan)",
+  "landType": "Wetland"
+}
+```
+
+**Response:**
+```json
+{
+  "best_match": {
+    "crop": "Rice",
+    "match_score": 95,
+    "weather": {...},
+    "advice": {...}
+  },
+  "alternatives": [...]
+}
+```
+
+#### Weather Data
+```http
+GET /weather?location=Rwanda
+```
+
+#### Available Crops
+```http
+GET /crops
+```
+
+### API Documentation
+
+Interactive API documentation available at:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+---
+
+## 🧪 Testing
+
+### Backend Testing
+
+```bash
+# Run all backend tests
+./test_backend.sh
+
+# Test specific endpoint
+curl http://localhost:8000/
+
+# Test image prediction
+./test_image.sh /path/to/image.jpg
+```
+
+### Flutter App Testing
+
+```bash
+# Run Flutter tests
+flutter test
+
+# Run with verbose output
+flutter run -v
+```
+
+### Integration Testing
+
+1. Start backend: `python main.py`
+2. Run Flutter app: `flutter run -d chrome`
+3. Test features:
+   - Upload image in Crop Health Scanner
+   - Get recommendations in AI Advisor
+   - Plan season in Season Planning
+
+---
+
+## 📦 Building for Production
+
+### Build Android APK
+
+```bash
+flutter build apk --release
+```
+
+Output: `build/app/outputs/flutter-apk/app-release.apk`
+
+### Build Android App Bundle (for Play Store)
+
+```bash
+flutter build appbundle --release
+```
+
+Output: `build/app/outputs/bundle/release/app-release.aab`
+
+### Build iOS (macOS only)
+
+```bash
+flutter build ios --release
+```
+
+### Build Web
+
+```bash
+flutter build web --release
+```
+
+Output: `build/web/`
+
+---
+
+## 🚢 Deployment
+
+### Backend Deployment
+
+#### Option 1: Hugging Face (Recommended for Models)
+
+1. Upload model to Hugging Face (see `HUGGINGFACE_SETUP.md`)
+2. Set `HUGGINGFACE_MODEL_ID` environment variable
+3. Deploy backend to cloud (Heroku, Railway, AWS, etc.)
+
+#### Option 2: Local Model
+
+1. Ensure model files are in `outputs/` directory
+2. Deploy backend with model files included
+
+### Mobile App Deployment
+
+#### Android Play Store
+
+1. Build app bundle: `flutter build appbundle --release`
+2. Create app in Google Play Console
+3. Upload the `.aab` file
+4. Complete store listing and submit for review
+
+#### iOS App Store (macOS only)
+
+1. Build iOS app: `flutter build ios --release`
+2. Archive in Xcode
+3. Upload to App Store Connect
+4. Submit for review
+
+### Web Deployment
+
+1. Build web: `flutter build web --release`
+2. Deploy `build/web/` to:
+   - Firebase Hosting
+   - Netlify
+   - Vercel
+   - GitHub Pages
+
+---
+
+## 📚 Related Files
+
+### Documentation Files
+- `QUICK_START.md` - Quick reference guide
+- `TESTING_GUIDE.md` - Comprehensive testing instructions
+- `RUN_COMMANDS.md` - Command reference
+- `HUGGINGFACE_SETUP.md` - Model deployment guide
+- `TEST_SCRIPTS_README.md` - Test scripts documentation
+
+### Configuration Files
+- `pubspec.yaml` - Flutter dependencies and configuration
+- `requirements.txt` - Python dependencies
+- `analysis_options.yaml` - Dart linting rules
+- `.gitignore` - Git ignore patterns
+
+### Data Files
+- `Rwanda_Crop_calendar_Data.csv` - Crop calendar data for recommendations
+- `lib/data/rwanda_locations.dart` - Rwanda administrative hierarchy
+
+### Script Files
+- `start_backend.sh` - Backend startup script
+- `test_backend.sh` - Backend testing script
+- `test_image.sh` - Image prediction tester
+- `upload_to_hf.py` - Hugging Face upload helper
+- `debug_crops.py` - Crop matching debugger
+
+### Source Code
+- `main.py` - FastAPI backend entry point
+- `services.py` - Backend business logic
+- `lib/` - Flutter mobile app source code
+
+---
+
+## 🔗 Links
+
+### Deployed Version / Application Package
+
+**Note**: Update these links with your actual deployment URLs or download links.
+
+#### Mobile App
+- **Android APK**: [Download APK](https://your-download-link.com/app-release.apk)
+- **iOS App**: [Download from App Store](https://apps.apple.com/app/cropsense-ai)
+- **Web App**: [Access Web Version](https://cropsense-ai.web.app)
+
+#### Backend API
+- **Production API**: `https://api.cropsense-ai.com`
+- **API Documentation**: `https://api.cropsense-ai.com/docs`
+
+#### Model Repository
+- **Hugging Face Model**: [View Model](https://huggingface.co/your-username/cropsense-mobilenetv2)
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+
+**Problem**: Model not loading
+```bash
+# Check if model file exists
+ls outputs/best_MobileNetV2.keras
+
+# Verify model_metadata.json
+cat outputs/model_metadata.json
+```
+
+**Problem**: Port already in use
+```bash
+# Kill process on port 8000
+lsof -ti:8000 | xargs kill -9
+```
+
+**Problem**: CORS errors
+- Backend already has CORS enabled for all origins
+- Check `main.py` CORS settings if issues persist
+
+### Flutter Issues
+
+**Problem**: Can't connect to backend
+- **Web**: Use `http://localhost:8000`
+- **Android Emulator**: Use `http://10.0.2.2:8000`
+- **Physical Device**: Use your computer's IP address
+
+**Problem**: Build errors
+```bash
+flutter clean
+flutter pub get
+flutter run
+```
+
+**Problem**: Dependencies not found
+```bash
+flutter pub get
+flutter pub upgrade
+```
+
+---
+
+## 🤝 Contributing
+
+This project is part of a BSc. Software Engineering thesis project by **Diana RUZINDANA**.
+
+For contributions, please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+---
+
+## 📄 License
+
+All rights reserved. This project is proprietary software.
+
+---
+
+## 👥 Contact & Support
+
+**Developer**: Diana RUZINDANA
+
+For questions, issues, or support:
+- **GitHub Issues**: [Create an issue](https://github.com/Diana-codes/cropsenseai-mobile-app/issues)
+- **Email**: [Your email address]
+
+---
+
+## 🙏 Acknowledgments
+
+- Rwanda Agricultural Board for crop calendar data
+- Open-Meteo for weather API services
+- Hugging Face for model hosting infrastructure
+- Flutter and FastAPI communities
+
+---
+
+## 📊 Project Status
+
+- ✅ **Backend API**: Fully functional
+- ✅ **Mobile App**: Production ready
+- ✅ **ML Model**: Integrated and working
+- ✅ **Weather Integration**: Active
+- ✅ **Location Data**: Complete Rwanda hierarchy
+- 🔄 **Continuous Improvement**: Ongoing
+
+---
+
+**Last Updated**: March 2025
+
+**Version**: 1.0.0
