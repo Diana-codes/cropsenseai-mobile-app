@@ -175,10 +175,27 @@ async def predict(file: UploadFile = File(...)):
     if model is None or (label_encoder is None and not CLASS_NAMES):
         weather = weather_service.get_weather_data("Rwanda")
         fallback_crop = "maize"
+        used_weather_fallback = False
+        try:
+            t = weather.get("temperature", 20)
+            h = weather.get("humidity", 60)
+            if t in (None, "N/A"):
+                temp_val = 20.0
+                used_weather_fallback = True
+            else:
+                temp_val = float(t)
+            if h in (None, "N/A"):
+                hum_val = 60.0
+                used_weather_fallback = True
+            else:
+                hum_val = float(h)
+        except (TypeError, ValueError):
+            temp_val, hum_val = 20.0, 60.0
+            used_weather_fallback = True
         advice = advisor.get_advice(
             crop=fallback_crop,
-            temperature=weather.get("temperature", 20),
-            humidity=weather.get("humidity", 60),
+            temperature=temp_val,
+            humidity=hum_val,
         )
 
         return {
@@ -186,6 +203,10 @@ async def predict(file: UploadFile = File(...)):
             "confidence": 0.0,
             "weather": weather,
             "advice": advice,
+            "weather_is_realtime": not used_weather_fallback,
+            "weather_note": "Real-time weather unavailable; showing generic advice based on typical conditions."
+            if used_weather_fallback
+            else "Advice uses real-time weather from Open-Meteo.",
             "timestamp": weather.get("timestamp"),
         }
     
@@ -214,12 +235,34 @@ async def predict(file: UploadFile = File(...)):
         
         # Fetch weather data
         weather = weather_service.get_weather_data("Rwanda")
-        
+        # Coerce to float so advisor never gets str (e.g. "N/A")
+        used_weather_fallback = False
+        try:
+            t = weather.get("temperature", 20)
+            if t in (None, "N/A"):
+                temp_val = 20.0
+                used_weather_fallback = True
+            else:
+                temp_val = float(t)
+        except (TypeError, ValueError):
+            temp_val = 20.0
+            used_weather_fallback = True
+        try:
+            h = weather.get("humidity", 60)
+            if h in (None, "N/A"):
+                hum_val = 60.0
+                used_weather_fallback = True
+            else:
+                hum_val = float(h)
+        except (TypeError, ValueError):
+            hum_val = 60.0
+            used_weather_fallback = True
+
         # Get agronomic advice
         advice = advisor.get_advice(
             crop=predicted_crop,
-            temperature=weather.get("temperature", 20),
-            humidity=weather.get("humidity", 60),
+            temperature=temp_val,
+            humidity=hum_val,
         )
         
         return {
@@ -227,6 +270,10 @@ async def predict(file: UploadFile = File(...)):
             "confidence": round(confidence * 100, 2),
             "weather": weather,
             "advice": advice,
+             "weather_is_realtime": not used_weather_fallback,
+             "weather_note": "Real-time weather unavailable; showing generic advice based on typical conditions."
+             if used_weather_fallback
+             else "Advice uses real-time weather from Open-Meteo.",
             "timestamp": weather.get("timestamp"),
         }
     

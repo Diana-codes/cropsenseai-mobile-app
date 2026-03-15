@@ -21,7 +21,7 @@ class ProcessScreen extends StatelessWidget {
                     icon: const Icon(Icons.arrow_back),
                   ),
                   Text(
-                    'Process',
+                    'Season Process',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -65,7 +65,7 @@ class ProcessScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Rice Cultivation',
+                            'Crop season process',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -74,7 +74,7 @@ class ProcessScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '120-140 days',
+                            'Typical steps for a crop season',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
@@ -89,11 +89,12 @@ class ProcessScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _buildSectionTitle('Overview'),
               const SizedBox(height: 12),
-              _buildInfoCard('Traditional rice cultivation process in flooded fields'),
+              _buildInfoCard(
+                'This screen summarizes a generic crop season process. '
+                'In future versions, these steps will adapt dynamically based on the crop '
+                'and season you plan from the AI Season Planning tool.',
+              ),
               const SizedBox(height: 16),
-              _buildInfoRow('Area', '2 ha - 3 hectares'),
-              _buildInfoRow('Seed Type', 'DMIS variety'),
-              _buildInfoRow('Expected Yield', 'River water, irrigation system'),
               const SizedBox(height: 24),
               _buildSectionTitle('Stages'),
               const SizedBox(height: 16),
