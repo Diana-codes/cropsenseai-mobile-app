@@ -235,10 +235,11 @@ async def predict(file: UploadFile = File(...)):
 
 # --- Weather Endpoint ---
 @app.get("/weather")
-async def get_weather(location: str = "Rwanda"):
-    """Get current weather data for a location"""
+async def get_weather(location: str = "Rwanda", province: str = "", district: str = ""):
+    """Get current weather data for a location (pass province/district for accurate coords)"""
     try:
-        weather = weather_service.get_weather_data(location)
+        display = (f"{district}, {province}".strip(", ") if (district or province) else None) or location or "Rwanda"
+        weather = weather_service.get_weather_data(display, province=province, district=district)
         return weather
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Weather error: {str(e)}")

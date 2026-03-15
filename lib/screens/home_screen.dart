@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/quick_action_button.dart';
-import '../widgets/alert_card.dart';
 import '../widgets/recommendation_card.dart';
 import 'ai_advisor_screen_enhanced.dart';
 import 'crop_health_scanner_screen.dart';
 import 'season_planning_screen.dart';
 import 'process_screen.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   Map<String, dynamic>? _profile;
   bool _isLoadingProfile = true;
+  Map<String, dynamic>? _weather;
+  Map<String, dynamic>? _advisorData;
 
   @override
   void initState() {
@@ -35,38 +37,34 @@ class _HomeScreenState extends State<HomeScreen> {
       _profile = profile;
       _isLoadingProfile = false;
     });
+    _fetchWeatherAndRecommendations(profile);
   }
 
-  final List<Map<String, dynamic>> _allRecommendations = [
-    {
-      'icon': Icons.grass,
-      'title': 'Rice (DMIS variety)',
-      'subtitle': 'Best choice for current season conditions',
-      'duration': '120-140 days',
-      'confidence': 'High confidence',
-    },
-    {
-      'icon': Icons.grain,
-      'title': 'Maize (Hybrid variety)',
-      'subtitle': 'Good alternative with lower water needs',
-      'duration': '90-110 days',
-      'confidence': 'Medium confidence',
-    },
-    {
-      'icon': Icons.local_florist,
-      'title': 'Beans (Climbing variety)',
-      'subtitle': 'Excellent for intercropping and soil health',
-      'duration': '75-90 days',
-      'confidence': 'High confidence',
-    },
-    {
-      'icon': Icons.spa,
-      'title': 'Irish Potato',
-      'subtitle': 'High demand and good market prices',
-      'duration': '90-120 days',
-      'confidence': 'Medium confidence',
-    },
-  ];
+  Future<void> _fetchWeatherAndRecommendations(Map<String, dynamic>? profile) async {
+    final province = profile?['province'] ?? '';
+    final district = profile?['district'] ?? '';
+    final location = district.isNotEmpty && province.isNotEmpty
+        ? '$district, $province'
+        : 'Rwanda';
+
+    final weather = await ApiService.getWeather(
+      location: location,
+      province: province,
+      district: district,
+    );
+    if (mounted) setState(() => _weather = weather);
+
+    if (province.isNotEmpty && district.isNotEmpty) {
+      final advisor = await ApiService.getAdvisorRecommendations(
+        province: province,
+        district: district,
+        sector: profile?['sector'] ?? '',
+        season: 'Season A (Sept - Jan)',
+        landType: 'Wetland',
+      );
+      if (mounted) setState(() => _advisorData = advisor);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,17 +117,19 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
               WeatherCard(
                 location: district.isNotEmpty ? '$district, Rwanda' : 'Rwanda',
-                temperature: 24,
-                condition: '☁️ Partly Cloudy',
-                humidity: 65,
-                windSpeed: 12,
-                forecast: [
-                  WeatherForecast(day: 'Mon', icon: '☀️', temp: 24),
-                  WeatherForecast(day: 'Tue', icon: '⛅', temp: 23),
-                  WeatherForecast(day: 'Wed', icon: '🌤️', temp: 25),
-                  WeatherForecast(day: 'Thu', icon: '☀️', temp: 26),
-                  WeatherForecast(day: 'Fri', icon: '⛅', temp: 27),
-                ],
+                temperature: _weather != null && _weather!['temperature'] != null
+                    ? (_weather!['temperature'] is num ? (_weather!['temperature'] as num).toInt() : 24)
+                    : 24,
+                condition: _weather != null && _weather!['weather_code'] != null
+                    ? _weatherCondition(_weather!['weather_code'])
+                    : '☁️ Loading...',
+                humidity: _weather != null && _weather!['humidity'] != null
+                    ? (_weather!['humidity'] is num ? (_weather!['humidity'] as num).toInt() : 60)
+                    : 60,
+                windSpeed: _weather != null && _weather!['wind_speed'] != null
+                    ? (_weather!['wind_speed'] is num ? (_weather!['wind_speed'] as num).toInt() : 10)
+                    : 10,
+                forecast: null,
               ),
               const SizedBox(height: 24),
               Text(
@@ -221,14 +221,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 16),
-              const AlertCard(
-                icon: Icons.warning_amber_rounded,
-                title: 'Heavy rainfall expected',
-                subtitle: 'This week: Postpone planting until water...',
-                actionText: 'Prepare field',
-                color: AppColors.warning,
-              ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -266,24 +258,68 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              ...(_showAllRecommendations
-                      ? _allRecommendations
-                      : _allRecommendations.take(2))
-                  .map((rec) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: RecommendationCard(
-                          icon: rec['icon'] as IconData,
-                          title: rec['title'] as String,
-                          subtitle: rec['subtitle'] as String,
-                          duration: rec['duration'] as String,
-                          confidence: rec['confidence'] as String,
-                        ),
-                      ))
-                  .toList(),
+              ..._buildRecommendationList().map(
+                (rec) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: RecommendationCard(
+                    icon: rec['icon'] as IconData,
+                    title: rec['title'] as String,
+                    subtitle: rec['subtitle'] as String,
+                    duration: rec['duration'] as String,
+                    confidence: rec['confidence'] as String,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _weatherCondition(dynamic code) {
+    if (code == null) return '☁️ —';
+    final c = code is num ? code.toInt() : 0;
+    if (c == 0) return '☀️ Clear';
+    if (c < 4) return '⛅ Partly cloudy';
+    if (c < 50) return '☁️ Cloudy';
+    if (c < 70) return '🌧️ Rain';
+    return '🌤️ Variable';
+  }
+
+  List<Map<String, dynamic>> _buildRecommendationList() {
+    final list = <Map<String, dynamic>>[];
+    if (_advisorData != null) {
+      final best = _advisorData!['best_match'] as Map<String, dynamic>?;
+      final alts = _advisorData!['alternatives'] as List? ?? [];
+      if (best != null) {
+        list.add(_recFromApi(best, Icons.grass, 'Best match'));
+      }
+      for (final a in alts.take(3)) {
+        list.add(_recFromApi(a as Map<String, dynamic>, Icons.grain, 'Alternative'));
+      }
+    }
+    if (list.isEmpty) {
+      list.addAll([
+        {
+          'icon': Icons.lightbulb_outline,
+          'title': 'Get personalized recommendations',
+          'subtitle': 'Complete your profile and use AI Advisor for crop suggestions.',
+          'duration': '—',
+          'confidence': 'Tap Get Advice',
+        },
+      ]);
+    }
+    return _showAllRecommendations ? list : list.take(2).toList();
+  }
+
+  Map<String, dynamic> _recFromApi(Map<String, dynamic> r, IconData icon, String confidence) {
+    return {
+      'icon': icon,
+      'title': r['crop']?.toString() ?? 'Crop',
+      'subtitle': r['reason']?.toString() ?? '',
+      'duration': r['growingPeriod']?.toString() ?? '—',
+      'confidence': confidence,
+    };
   }
 }

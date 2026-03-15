@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../data/rwanda_locations.dart';
+import '../services/api_service.dart';
 
 class SeasonPlanningScreen extends StatefulWidget {
   const SeasonPlanningScreen({super.key});
@@ -19,6 +20,8 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
   String _season = '';
   String _landType = '';
   String _landSize = '';
+  Map<String, dynamic>? _advisorData;
+  bool _isLoadingAdvisor = false;
 
   @override
   Widget build(BuildContext context) {
@@ -191,28 +194,18 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    const Text(
-                      'Expected Weather Conditions',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                    const Icon(Icons.info_outline, color: AppColors.info),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Current weather for your location will be shown in the results.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildWeatherStat('🌡️', '22-28°C', 'Temperature'),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildWeatherStat('💧', '800-1200mm', 'Rainfall'),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -286,7 +279,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           ),
           child: Column(
             children: [
-              _buildDropdown('Land Type', _landType, ['Wetland (Marshland)', 'Hillside', 'Valley Bottom', 'Plateau'], (value) {
+              _buildDropdown('Land type', _landType, ['Wetland', 'Hillside', 'Valley', 'Plateau'], (value) {
                 setState(() {
                   _landType = value!;
                 });
@@ -349,15 +342,31 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _landType.isNotEmpty && _landSize.isNotEmpty
-                          ? () {
-                              setState(() {
-                                _currentStep = 2;
-                              });
-                            }
-                          : null,
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _landType.isNotEmpty && _landSize.isNotEmpty && !_isLoadingAdvisor
+                            ? () async {
+                                setState(() {
+                                  _isLoadingAdvisor = true;
+                                  _advisorData = null;
+                                });
+                                final data = await ApiService.getAdvisorRecommendations(
+                                  province: _province,
+                                  district: _district,
+                                  sector: _sector,
+                                  season: _season,
+                                  landType: _landType,
+                                );
+                                if (mounted) {
+                                  setState(() {
+                                    _advisorData = data;
+                                    _isLoadingAdvisor = false;
+                                    _currentStep = 2;
+                                  });
+                                }
+                              }
+                            : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -366,7 +375,13 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: _isLoadingAdvisor
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text(
                         'Analyze',
                         style: TextStyle(
                           fontSize: 16,
@@ -415,11 +430,26 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
-        _buildRecommendationResult(),
-        const SizedBox(height: 16),
-        _buildAlternativeResult(),
-        const SizedBox(height: 24),
-        _buildWeatherAnalysis(),
+        if (_advisorData != null) ...[
+          _buildRecommendationResult(),
+          const SizedBox(height: 16),
+          _buildAlternativeResult(),
+          if (_advisorData!['weather'] != null) ...[
+            const SizedBox(height: 24),
+            _buildWeatherAnalysis(),
+          ],
+        ] else ...[
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'No recommendations available for this combination. Try a different land type or season.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
@@ -435,8 +465,10 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Start Season with Rice',
+            child: Text(
+              _advisorData?['best_match']?['crop'] != null
+                  ? 'Start Season with ${_advisorData!['best_match']['crop']}'
+                  : 'Done',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -522,34 +554,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildWeatherStat(String icon, String value, String label) {
-    return Column(
-      children: [
-        Text(
-          icon,
-          style: const TextStyle(fontSize: 32),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildRecommendationResult() {
+    final best = _advisorData?['best_match'] as Map<String, dynamic>?;
+    if (best == null) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -571,10 +578,10 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 child: const Icon(Icons.grass, color: AppColors.primary, size: 32),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Rice (DMIS Variety)',
-                  style: TextStyle(
+                  best['crop']?.toString() ?? 'Best crop',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -600,7 +607,8 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Perfect match for $_district $_landType conditions. This variety thrives in $_season with expected high yields.',
+            best['reason']?.toString() ??
+                'Good match for $_district $_landType in $_season.',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
@@ -609,84 +617,92 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildStatChip('120-140 days', 'Growing period'),
+              _buildStatChip(best['growingPeriod']?.toString() ?? '—', 'Growing period'),
               const SizedBox(width: 12),
-              _buildStatChip('6-7 tons/ha', 'Expected yield'),
+              _buildStatChip(best['agroZone']?.toString() ?? '—', 'Agro zone'),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildStatChip('95%', 'Success rate'),
         ],
       ),
     );
   }
 
   Widget _buildAlternativeResult() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+    final alts = _advisorData?['alternatives'] as List? ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: alts.take(2).map((a) {
+        final alt = a as Map<String, dynamic>;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.grain, color: Colors.orange, size: 32),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        alt['crop']?.toString() ?? 'Alternative',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Alternative',
+                        style: TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.grain, color: Colors.orange, size: 32),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Maize (Hybrid)',
+                const SizedBox(height: 12),
+                Text(
+                  alt['reason']?.toString() ?? 'Suitable for similar conditions.',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _buildStatChip(alt['growingPeriod']?.toString() ?? '—', 'Growing period'),
+                    const SizedBox(width: 12),
+                    _buildStatChip(alt['agroZone']?.toString() ?? '—', 'Agro zone'),
+                  ],
                 ),
-                child: const Text(
-                  'Alternative',
-                  style: TextStyle(
-                    color: AppColors.warning,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Good alternative with moderate water needs. Suitable for hillside areas.',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildStatChip('90-110 days', 'Growing period'),
-              const SizedBox(width: 12),
-              _buildStatChip('4-5 tons/ha', 'Expected yield'),
-            ],
-          ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 
@@ -714,6 +730,10 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
   }
 
   Widget _buildWeatherAnalysis() {
+    final w = _advisorData?['weather'] as Map<String, dynamic>?;
+    final temp = w?['temperature'];
+    final humidity = w?['humidity'];
+    final location = w?['location'] ?? '—';
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -724,7 +744,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Weather Analysis',
+            'Current Weather',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -733,24 +753,17 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           ),
           const SizedBox(height: 16),
           _buildAnalysisItem(
-            Icons.check_circle,
-            AppColors.success,
-            'Rainfall Pattern: Optimal',
-            'Expected rainfall of 900-1100mm matches rice water requirements perfectly',
+            Icons.thermostat,
+            AppColors.primary,
+            'Temperature: ${temp ?? "N/A"}°C',
+            'Location: $location',
           ),
           const SizedBox(height: 12),
           _buildAnalysisItem(
-            Icons.check_circle,
-            AppColors.success,
-            'Temperature: Ideal',
-            'Average temperature of 24-26°C is ideal for rice cultivation',
-          ),
-          const SizedBox(height: 12),
-          _buildAnalysisItem(
-            Icons.warning,
-            AppColors.warning,
-            'Risk Factor: Medium',
-            'Monitor for potential pest pressure during mid-season. Preventive measures recommended.',
+            Icons.water_drop,
+            AppColors.info,
+            'Humidity: ${humidity ?? "N/A"}%',
+            'Based on Open-Meteo data for your area.',
           ),
         ],
       ),

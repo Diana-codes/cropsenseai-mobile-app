@@ -182,6 +182,9 @@ class RwandaAgronomistAdvisor:
     def get_advice(self, crop: str, temperature: float = 20, humidity: float = 60) -> Dict:
         """Get agronomic advice based on crop and weather conditions"""
         crop_lower = crop.lower().strip()
+        # CSV uses "Corn", "Bean" etc. - map to advisor keys
+        crop_aliases = {"corn": "maize", "bean": "beans", "beans, harvested green": "beans"}
+        crop_lower = crop_aliases.get(crop_lower, crop_lower)
         
         weather_condition = self.get_weather_condition(temperature, humidity)
         
@@ -292,25 +295,44 @@ class RwandaCropPlanner:
     """
 
     def __init__(self, csv_path: str = "Rwanda_Crop_calendar_Data.csv"):
-        self._rows: List[Dict[str, str]] = []
+        self._rows: List[Dict] = []
         try:
             with open(csv_path, newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                # Skip the second header row (sub-headers like "Day", "Month")
-                next(reader, None)
-                # Read actual data rows
-                self._rows = list(reader)
+                reader = csv.reader(f)
+                header = next(reader)
+                next(reader)  # Skip sub-header (Day, Month, etc.)
+                # CSV cols: 0=Crop, 1=AgroEcological Zone, 4=Early Sowing Month, 6=Later Sowing Month
+                # 10=Growing period Value, 17=AgroEcological Zone Practices
+                for row in reader:
+                    if len(row) < 18:
+                        continue
+                    try:
+                        early_month = int(row[4].strip()) if row[4].strip() else 0
+                    except (ValueError, IndexError):
+                        early_month = 0
+                    try:
+                        late_month = int(row[6].strip()) if row[6].strip() else 0
+                    except (ValueError, IndexError):
+                        late_month = 0
+                    self._rows.append({
+                        "Crop": (row[0] or "").strip(),
+                        "AgroEcological Zone": (row[1] or "").strip(),
+                        "early_month": early_month,
+                        "late_month": late_month,
+                        "reason": (row[17] or "").strip() if len(row) > 17 else "",
+                        "growing_period": (row[10] or "").strip() if len(row) > 10 else "",
+                    })
             print(f"✓ Loaded crop calendar data from {csv_path} ({len(self._rows)} rows)")
         except Exception as e:
             print(f"✗ Error loading crop calendar data from {csv_path}: {e}")
             self._rows = []
 
-        # Map land type to a representative agro-ecological zone in the dataset
-        self.landtype_to_zone: Dict[str, str] = {
-            "wetland": "Imbo",
-            "valley": "Imbo",
-            "hillside": "Congo-Nile Watershed Divide & Buberuka highlands",
-            "plateau": "Birunga",
+        # Map land type to agro-ecological zones (each land type can match multiple zones)
+        self.landtype_to_zones: Dict[str, List[str]] = {
+            "wetland": ["Imbo", "Impara & Kivu lake borders"],
+            "valley": ["Imbo", "Impara & Kivu lake borders"],
+            "hillside": ["Congo-Nile Watershed Divide & Buberuka highlands", "Impara & Kivu lake borders"],
+            "plateau": ["Birunga", "Central Plateau", "Eastern Plateau & Eastern Savanna"],
         }
 
     def _season_to_months(self, season: str) -> List[int]:
@@ -337,7 +359,7 @@ class RwandaCropPlanner:
             return []
 
         months = self._season_to_months(season)
-        zone = self.landtype_to_zone.get(land_type.lower(), "")
+        zones = self.landtype_to_zones.get(land_type.lower().strip(), [])
 
         recs: List[CropRecommendation] = []
         
@@ -352,53 +374,19 @@ class RwandaCropPlanner:
                 pass
 
         for row in self._rows:
-            agro = (row.get("AgroEcological Zone") or "").strip()
-            if zone and agro != zone:
+            agro = row.get("AgroEcological Zone") or ""
+            if zones and agro not in zones:
                 continue
 
-            # CSV structure: "Early Sowing" (Day), "" (Month), "Later Sowing" (Day), "" (Month)
-            # The month values are in the empty key columns immediately after "Early Sowing" and "Later Sowing"
-            try:
-                # Get ordered fieldnames to find column indices
-                # We need to access the row as a list to preserve order
-                row_list = list(row.items())
-                fieldnames = list(row.keys())
-                
-                # Find index of "Early Sowing", month is at index+1
-                if "Early Sowing" in fieldnames:
-                    early_idx = fieldnames.index("Early Sowing")
-                    if early_idx + 1 < len(row_list):
-                        early_month_str = row_list[early_idx + 1][1] or ""
-                        early_month = int(early_month_str.strip()) if early_month_str.strip() else 0
-                    else:
-                        early_month = 0
-                else:
-                    early_month = 0
-            except (ValueError, IndexError, TypeError):
-                early_month = 0
-
-            try:
-                # Find index of "Later Sowing", month is at index+1
-                row_list = list(row.items())
-                fieldnames = list(row.keys())
-                if "Later Sowing" in fieldnames:
-                    late_idx = fieldnames.index("Later Sowing")
-                    if late_idx + 1 < len(row_list):
-                        late_month_str = row_list[late_idx + 1][1] or ""
-                        late_month = int(late_month_str.strip()) if late_month_str.strip() else 0
-                    else:
-                        late_month = 0
-                else:
-                    late_month = 0
-            except (ValueError, IndexError, TypeError):
-                late_month = 0
+            early_month = row.get("early_month", 0)
+            late_month = row.get("late_month", 0)
 
             # If sowing window overlaps with desired season months
             if early_month in months or late_month in months:
-                crop_name = (row.get("Crop") or "").strip()
-                reason = (row.get("AgroEcological Zone Practices") or "").strip()
+                crop_name = row.get("Crop") or ""
+                reason = row.get("reason") or ""
                 sowing_window = f"{early_month}-{late_month}" if early_month and late_month else "N/A"
-                growing_period = (row.get("Growing period  Value") or row.get(" Growing period  Value") or "").strip()
+                growing_period = row.get("growing_period") or ""
 
                 recs.append(
                     CropRecommendation(
@@ -412,25 +400,32 @@ class RwandaCropPlanner:
 
         # Rank crops based on weather suitability if weather data is available
         if temp is not None and humidity is not None:
+            # CSV uses "Corn", "Bean", "Pea, dry" etc. - normalize for scoring
+            _CROP_ALIASES = {
+                "corn": "maize", "bean": "beans", "beans, harvested green": "beans",
+                "pea, dry": "peas", "pea": "peas", "beet, sugar": "beet", "beet": "beet",
+            }
+
             def weather_score(rec: CropRecommendation) -> float:
                 """Score crops based on weather suitability"""
-                crop_lower = rec.crop.lower()
+                crop_lower = rec.crop.lower().strip()
+                crop_for_scoring = _CROP_ALIASES.get(crop_lower, crop_lower)
                 score = 0.0
                 
                 # Temperature-based scoring
-                if "rice" in crop_lower or "banana" in crop_lower:
+                if "rice" in crop_for_scoring or "banana" in crop_for_scoring:
                     # Prefer warmer (20-30°C)
                     if 20 <= temp <= 30:
                         score += 2.0
                     elif 15 <= temp < 20 or 30 < temp <= 35:
                         score += 1.0
-                elif "potato" in crop_lower or "wheat" in crop_lower:
+                elif "potato" in crop_for_scoring or "wheat" in crop_for_scoring:
                     # Prefer cooler (15-25°C)
                     if 15 <= temp <= 25:
                         score += 2.0
                     elif 10 <= temp < 15 or 25 < temp <= 30:
                         score += 1.0
-                elif "maize" in crop_lower or "beans" in crop_lower or "cassava" in crop_lower:
+                elif "maize" in crop_for_scoring or "beans" in crop_for_scoring or "cassava" in crop_for_scoring or "peas" in crop_for_scoring or "sorghum" in crop_for_scoring:
                     # Prefer moderate (18-28°C)
                     if 18 <= temp <= 28:
                         score += 2.0
@@ -438,17 +433,17 @@ class RwandaCropPlanner:
                         score += 1.0
                 
                 # Humidity-based scoring
-                if "rice" in crop_lower:
+                if "rice" in crop_for_scoring:
                     # Rice prefers high humidity
                     if humidity >= 60:
                         score += 1.5
                     elif humidity >= 40:
                         score += 0.5
-                elif "cassava" in crop_lower:
+                elif "cassava" in crop_for_scoring:
                     # Cassava is drought-tolerant, moderate humidity is fine
                     if 40 <= humidity <= 70:
                         score += 1.0
-                elif "maize" in crop_lower or "beans" in crop_lower:
+                elif "maize" in crop_for_scoring or "beans" in crop_for_scoring:
                     # Prefer moderate humidity (50-70%)
                     if 50 <= humidity <= 70:
                         score += 1.0

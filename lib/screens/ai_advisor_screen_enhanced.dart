@@ -1,16 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../utils/colors.dart';
 import '../data/rwanda_locations.dart';
-
-// Default to localhost (good for Flutter web and when backend runs on same machine).
-// For Android emulator, override with:
-// flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
-const String _advisorApiBaseUrl =
-    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8000');
+import '../services/api_service.dart';
 
 class AIAdvisorScreenEnhanced extends StatefulWidget {
   const AIAdvisorScreenEnhanced({super.key});
@@ -38,45 +30,28 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
       _errorMessage = null;
     });
 
-    try {
-      final uri = Uri.parse('$_advisorApiBaseUrl/advisor');
-      final payload = {
-        'province': _province,
-        'district': _district,
-        'sector': _sector,
-        'cell': _cell,
-        'village': _village,
-        'season': _season,
-        'landType': _landType.toLowerCase(),
-      };
+    final data = await ApiService.getAdvisorRecommendations(
+      province: _province,
+      district: _district,
+      sector: _sector,
+      cell: _cell,
+      village: _village,
+      season: _season,
+      landType: _landType,
+    );
 
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Advisor request failed (${response.statusCode}): ${response.body}');
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      setState(() {
+    setState(() {
+      _isLoading = false;
+      if (data != null) {
         _advisorData = data;
         _showRecommendations = true;
-      });
-    } catch (e) {
-      setState(() {
+        _errorMessage = null;
+      } else {
         _errorMessage =
-            'Failed to fetch AI cultivation guide. Please make sure the backend is running and try again.\n$e';
+            'Failed to fetch recommendations. Ensure the backend is running and try again.';
         _showRecommendations = false;
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+      }
+    });
   }
 
   @override
@@ -209,13 +184,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     Builder(
                       builder: (context) {
                         final cells = RwandaLocations.getCells(_province, _district, _sector);
-                        // Debug: print cells to console
-                        if (cells.isNotEmpty) {
-                          print('Found ${cells.length} cells for $_province -> $_district -> $_sector: $cells');
-                        } else {
-                          print('No cells found for $_province -> $_district -> $_sector');
-                        }
-                        return _buildDropdown('Cell', _cell, cells, (value) {
+                        return _buildDropdown('Cell (optional)', _cell, cells, (value) {
                           setState(() {
                             _cell = value!;
                             _village = '';
@@ -226,7 +195,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                   ],
                   if (_cell.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    _buildDropdown('Village', _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
+                    _buildDropdown('Village (optional)', _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
                       setState(() {
                         _village = value!;
                       });
@@ -239,7 +208,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     });
                   }),
                   const SizedBox(height: 16),
-                  _buildDropdown('Select land type', _landType, ['Wetland', 'Hillside', 'Valley', 'Plateau'], (value) {
+                  _buildDropdown('Land type', _landType, ['Wetland', 'Hillside', 'Valley', 'Plateau'], (value) {
                     setState(() {
                       _landType = value!;
                     });
@@ -251,8 +220,6 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                       onPressed: _province.isNotEmpty &&
                               _district.isNotEmpty &&
                               _sector.isNotEmpty &&
-                              _cell.isNotEmpty &&
-                              _village.isNotEmpty &&
                               _season.isNotEmpty &&
                               _landType.isNotEmpty
                           ? () {
@@ -331,66 +298,6 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             _buildTipCard('2', 'Clear Focus', 'Ensure that the camera is steady and focus on the leaf clearly with sharp details', AppColors.info),
             const SizedBox(height: 12),
             _buildTipCard('3', 'Multiple Angles', 'Take 2-3 photos from different angles. AI analyzes from multiple perspectives', AppColors.purple),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.info.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: AppColors.info),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'AI Feature Coming Soon',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Automatic disease detection and treatment recommendations will be available in the next version.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  'Next Steps',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

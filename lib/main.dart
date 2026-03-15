@@ -39,8 +39,16 @@ class CropSenseApp extends StatelessWidget {
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
+  // Controls whether to skip Supabase auth (for local testing only).
+  static const bool _skipAuthForTesting = false;
+
   @override
   Widget build(BuildContext context) {
+    // Skip login - go straight to app for testing Crop Health, Advisor, etc.
+    if (_skipAuthForTesting) {
+      return const MainNavigator();
+    }
+
     final authService = AuthService();
 
     return StreamBuilder(
