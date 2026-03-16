@@ -127,7 +127,7 @@ cd cropsenseai-mobile-app
    - `supabaseUrl`
    - `supabaseAnonKey`
 
-Optional: see `SUPABASE_SETUP.md` for schema and profile fields.
+Use your Supabase project URL and anon key in `lib/services/supabase_service.dart`.
 
 ---
 
@@ -138,8 +138,6 @@ Optional: see `SUPABASE_SETUP.md` for schema and profile fields.
 | File | Description |
 |------|-------------|
 | `README.md` | This file – overview, install, run, demo, deployment |
-| `SUPABASE_SETUP.md` | Supabase project and profile setup |
-| `HUGGINGFACE_UPLOAD.md` | How to upload the disease model to Hugging Face |
 | `training/README.md` | How to run the training script and notebook |
 | `dataset/README.md` | Dataset layout (Healthy, Powdery, Rust) |
 
