@@ -48,11 +48,19 @@ def load_model():
     if hf_model_id and HF_AVAILABLE:
         try:
             print(f"🔄 Attempting to load model from Hugging Face: {hf_model_id}")
-            model_file = hf_hub_download(
-                repo_id=hf_model_id,
-                filename="best_MobileNetV2.keras",
-                cache_dir=".hf_cache"
-            )
+            # Try best_model.keras first (from training script), then legacy name
+            for fname in ("best_model.keras", "best_MobileNetV2.keras"):
+                try:
+                    model_file = hf_hub_download(
+                        repo_id=hf_model_id,
+                        filename=fname,
+                        cache_dir=".hf_cache"
+                    )
+                    break
+                except Exception:
+                    continue
+            else:
+                raise FileNotFoundError("No best_model.keras or best_MobileNetV2.keras in repo")
             model = tf.keras.models.load_model(model_file)
             print(f"✓ Model loaded successfully from Hugging Face: {hf_model_id}")
             return
@@ -62,9 +70,12 @@ def load_model():
     
     # Option 2: Load from local file (fallback)
     try:
-        model_path = os.environ.get(
-            "CROPSENSE_MODEL_PATH", "outputs/best_MobileNetV2.keras"
+        default_path = (
+            "outputs/best_model.keras"
+            if os.path.exists("outputs/best_model.keras")
+            else "outputs/best_MobileNetV2.keras"
         )
+        model_path = os.environ.get("CROPSENSE_MODEL_PATH", default_path)
         if os.path.exists(model_path):
             model = tf.keras.models.load_model(model_path)
             print(f"✓ Model loaded successfully from local path: {model_path}")
@@ -107,7 +118,7 @@ def load_label_encoder():
             )
             with open(meta_file, "r") as f:
                 meta = json.load(f)
-            classes = meta.get("classes") or []
+            classes = meta.get("classes") or meta.get("class_names") or []
             CLASS_NAMES = [str(c) for c in classes]
             if CLASS_NAMES:
                 print(f"✓ Loaded class names from Hugging Face: {CLASS_NAMES}")
@@ -120,12 +131,12 @@ def load_label_encoder():
         meta_path = os.path.join("outputs", "model_metadata.json")
         with open(meta_path, "r") as f:
             meta = json.load(f)
-        classes = meta.get("classes") or []
+        classes = meta.get("classes") or meta.get("class_names") or []
         CLASS_NAMES = [str(c) for c in classes]
         if CLASS_NAMES:
             print(f"✓ Loaded class names from {meta_path}: {CLASS_NAMES}")
         else:
-            print(f"✗ No 'classes' field found in {meta_path}")
+            print(f"✗ No 'classes' or 'class_names' in {meta_path}")
     except Exception as e:
         print(f"✗ Error loading class names from model_metadata.json: {e}")
         CLASS_NAMES = []

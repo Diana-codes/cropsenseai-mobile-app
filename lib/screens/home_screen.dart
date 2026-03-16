@@ -9,6 +9,7 @@ import 'season_planning_screen.dart';
 import 'process_screen.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../services/app_settings.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -212,7 +213,56 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              if (_advisorData != null && _advisorData!['best_match'] != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'My current plan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Crop: ${_advisorData!['best_match']['crop']}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Location: $locationText • Season: Season A (Sept - Jan)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ] else ...[
+                const SizedBox(height: 24),
+              ],
               Text(
                 'Alerts & Recommendations',
                 style: TextStyle(
@@ -221,7 +271,39 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              if (AppSettings.notificationsEnabled && _advisorData != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.info.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.notifications_active, color: AppColors.info),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _advisorData!['best_match']?['crop'] != null
+                              ? 'Season reminder for $locationText • Recommended crop: ${_advisorData!['best_match']['crop']}'
+                              : 'Season reminder for $locationText based on your latest AI analysis.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else ...[
+                const SizedBox(height: 8),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

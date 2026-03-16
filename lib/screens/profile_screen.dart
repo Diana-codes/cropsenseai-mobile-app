@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../services/auth_service.dart';
+import '../services/app_settings.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -281,8 +282,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           if (hasSwitch)
             Switch(
-              value: true,
-              onChanged: (value) {},
+              value: AppSettings.notificationsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  AppSettings.notificationsEnabled = value;
+                });
+              },
               activeColor: AppColors.primary,
             )
           else

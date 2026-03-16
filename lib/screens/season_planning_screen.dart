@@ -182,11 +182,21 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 }),
               ],
               const SizedBox(height: 16),
-              _buildDropdown('Season', _season, ['Season A (Sept - Jan)', 'Season B (Feb - June)'], (value) {
-                setState(() {
-                  _season = value!;
-                });
-              }),
+              _buildDropdown(
+                'Season',
+                _season,
+                [
+                  'Long rainy season (Feb - May)',
+                  'Short rainy season (Sep - Dec)',
+                  'Dry season (Jun - Aug)',
+                  'Dry season (Dec - Jan)',
+                ],
+                (value) {
+                  setState(() {
+                    _season = value!;
+                  });
+                },
+              ),
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -465,10 +475,8 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: Text(
-              _advisorData?['best_match']?['crop'] != null
-                  ? 'Start Season with ${_advisorData!['best_match']['crop']}'
-                  : 'Done',
+            child: const Text(
+              'Done',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

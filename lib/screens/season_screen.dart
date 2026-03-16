@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
+import 'season_planning_screen.dart';
+import 'ai_advisor_screen_enhanced.dart';
 
 class SeasonScreen extends StatelessWidget {
   const SeasonScreen({super.key});
@@ -15,7 +17,7 @@ class SeasonScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Season',
+                'Rwanda Seasons',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -29,212 +31,116 @@ class SeasonScreen extends StatelessWidget {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.grass,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.success,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'In progress',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'WINTER: SPRING RICE',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Rice   Field A2 (2ha)',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Phase progress',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     const Text(
-                      '16%',
+                      'Rwanda does not have winter and summer. Instead, farmers plan around long and short rainy seasons and dry seasons.',
                       style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        color: Colors.white,
+                        fontSize: 14,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTimeCard('10 days', 'GDD'),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTimeCard('15 days', 'Elapsed'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 24,
-                          backgroundColor: AppColors.primary,
-                          child: Icon(Icons.emoji_events, color: Colors.white),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'EXCELLENT FARMER',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    const Text(
+                      '- Long rainy season: February – May\n'
+                      '- Short rainy season: September – December\n'
+                      '- Long dry season: June – August\n'
+                      '- Short dry season: December – January',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'We are currently in: ${_currentRwandaSeason()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      'Achieved over 95% productivity for 3 consecutive seasons',
+                    const Text(
+                      'Use the AI Season Planning tool to choose your location and season. This page will later show dynamic progress for your own fields.',
                       style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: Colors.white,
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'OVERVIEW STATISTICS',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard('4', 'Years of field data'),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SeasonPlanningScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.map),
+                      label: const Text('Plan new season'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard('2', 'Crops planted'),
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AIAdvisorScreenEnhanced(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.lightbulb_outline),
+                      label: const Text('Get AI advice'),
+                    ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard('87.5%', 'Average productivity'),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard('8.2%', 'Income increase'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'CONTACT INFORMATION',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildContactRow(Icons.phone, '+250 788 123 456'),
-              _buildContactRow(Icons.email, 'uwimana@email.rw'),
-              _buildContactRow(
-                Icons.location_on,
-                'Bugesera District, Eastern Province, Rwanda',
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _currentRwandaSeason() {
+    final month = DateTime.now().month;
+    if (month >= 2 && month <= 5) {
+      return 'Long rainy season (Feb – May)';
+    }
+    if (month >= 9 && month <= 12) {
+      return 'Short rainy season (Sep – Dec)';
+    }
+    if (month >= 6 && month <= 8) {
+      return 'Long dry season (Jun – Aug)';
+    }
+    return 'Short dry season (Dec – Jan)';
   }
 
   Widget _buildTimeCard(String value, String label) {

@@ -90,54 +90,35 @@ class ProcessScreen extends StatelessWidget {
               _buildSectionTitle('Overview'),
               const SizedBox(height: 12),
               _buildInfoCard(
-                'This screen summarizes a generic crop season process. '
-                'In future versions, these steps will adapt dynamically based on the crop '
-                'and season you plan from the AI Season Planning tool.',
+                'This screen summarizes a typical crop season flow. '
+                'In future versions it will be fully linked to your AI Season Planning results so that each farmer sees tasks and status for their own fields.',
               ),
               const SizedBox(height: 16),
-              const SizedBox(height: 24),
-              _buildSectionTitle('Stages'),
-              const SizedBox(height: 16),
-              _buildStageCard(
-                '1. Soil preparation',
-                'Complete',
-                'Land preparation is the foundation for successful rice cultivation and must be done well.',
-                AppColors.success,
-                Icons.check_circle,
+              _buildSectionTitle('Typical season stages'),
+              const SizedBox(height: 12),
+              _buildSimpleStageCard(
+                '1. Prepare land',
+                'Clear residues and weeds, test soil where possible, and plan inputs before the rains.',
               ),
-              const SizedBox(height: 12),
-              _buildStageCard(
-                '2. Clear weeds and crop residue',
-                'In Progress',
-                null,
-                AppColors.info,
-                Icons.autorenew,
+              const SizedBox(height: 8),
+              _buildSimpleStageCard(
+                '2. Plant & establish crop',
+                'Choose recommended varieties for your province and season, and plant at the right spacing.',
               ),
-              const SizedBox(height: 12),
-              _buildStageCard(
-                '3. Planting',
-                'Upcoming',
-                null,
-                AppColors.textSecondary,
-                Icons.schedule,
+              const SizedBox(height: 8),
+              _buildSimpleStageCard(
+                '3. Manage crop during season',
+                'Monitor for pests, diseases, and nutrient stress. Use Crop Health Scanner and local advice to guide actions.',
               ),
-              const SizedBox(height: 12),
-              _buildExpandedStageCard(),
-              const SizedBox(height: 12),
-              _buildStageCard(
-                '5. Soil mulching',
-                'Upcoming',
-                null,
-                AppColors.textSecondary,
-                Icons.schedule,
+              const SizedBox(height: 8),
+              _buildSimpleStageCard(
+                '4. Harvest at the right time',
+                'Avoid harvesting too early or too late so that yield and quality are not lost.',
               ),
-              const SizedBox(height: 12),
-              _buildStageCard(
-                '6. Transporting',
-                'Upcoming',
-                null,
-                AppColors.textSecondary,
-                Icons.schedule,
+              const SizedBox(height: 8),
+              _buildSimpleStageCard(
+                '5. Post-harvest handling & storage',
+                'Dry and store grain safely, or market fresh produce quickly to reduce losses.',
               ),
             ],
           ),
@@ -170,6 +151,44 @@ class ProcessScreen extends StatelessWidget {
           fontSize: 14,
           color: AppColors.textSecondary,
         ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleStageCard(String title, String description) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }

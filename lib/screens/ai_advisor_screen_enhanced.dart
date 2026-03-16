@@ -262,6 +262,14 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             ],
             if (_showRecommendations && _advisorData != null && _advisorData!['best_match'] != null) ...[
               const SizedBox(height: 24),
+              Text(
+                'Location: ${_district.isNotEmpty ? '$_district, ' : ''}${_province.isNotEmpty ? _province : 'Rwanda'}  •  Season: ${_season.isNotEmpty ? _season : 'Not set'}',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               const Text(
                 'AI Recommendations',
                 style: TextStyle(
@@ -283,21 +291,6 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                       ),
                     ),
             ],
-            const SizedBox(height: 24),
-            const Text(
-              'How to Take Good Photos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildTipCard('1', 'Good Lighting', 'Take the photo in natural light; avoid dark or shaded areas for best results', AppColors.primary),
-            const SizedBox(height: 12),
-            _buildTipCard('2', 'Clear Focus', 'Ensure that the camera is steady and focus on the leaf clearly with sharp details', AppColors.info),
-            const SizedBox(height: 12),
-            _buildTipCard('3', 'Multiple Angles', 'Take 2-3 photos from different angles. AI analyzes from multiple perspectives', AppColors.purple),
           ],
         ),
       ),
