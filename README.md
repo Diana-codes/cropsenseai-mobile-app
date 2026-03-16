@@ -257,7 +257,7 @@ This project uses the MIT license (or as specified in the repository). The Huggi
 **Diana RUZINDANA** – CropSense AI (BSc. Software Engineering / Smart farming for Rwanda)
 
 - GitHub: [Diana-codes/cropsenseai-mobile-app](https://github.com/Diana-codes/cropsenseai-mobile-app)
-- Demo video: [https://drive.google.com/file/d/1uT95GxZMThcHiYPlwZMeJRoXhZBxjR-u/view?usp=sharing)
+- Demo video: [https://drive.google.com/file/d/1uT95GxZMThcHiYPlwZMeJRoXhZBxjR-u/view?usp=sharing]
 - Deployed API: (https://cropsenseai-mobile-app.onrender.com)
 
 ---
