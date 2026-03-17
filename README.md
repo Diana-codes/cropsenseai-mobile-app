@@ -24,14 +24,11 @@ CropSense AI is a mobile application that helps smallholder farmers in Rwanda wi
 
 ---
 
-## 🎬 Demo Video (5 minutes)
+## 🎬 Demo Video
 
-A **5-minute demo video** shows the app in action. The video focuses on **core functionalities** (Crop Health Scanner, Season Planning, crop selection via AI Advisor, Rwanda Seasons, Process screen) and **does not focus on sign-up/sign-in**; only a brief login is shown if needed.
+A **5-minute demo video** shows the app in action. The video focuses on **core functionalities** (Crop Health Scanner, Season Planning, crop selection via AI Advisor, Rwanda Seasons, Process screen).
 
-- **Video link**: [Add your 5-minute demo video link here – e.g. YouTube, Google Drive, or Loom]
-
-*Suggested flow for the video: Home → Season tab (Rwanda seasons) → New Season Planning (location, season, land type, crop selection result) → AI Advisor (crop selection) → Crop Health Scanner (upload image, prediction, advice) → My Process (season stages).*
-
+- **Video link**: [https://drive.google.com/file/d/1uT95GxZMThcHiYPlwZMeJRoXhZBxjR-u/view?usp=sharing]
 ---
 
 ## 📲 Deployed Version / Installable Package
