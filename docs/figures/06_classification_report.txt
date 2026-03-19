@@ -1,0 +1,11 @@
+Best model: MobileNetV2
+
+              precision    recall  f1-score   support
+
+     Healthy       1.00      1.00      1.00        53
+     Powdery       0.98      1.00      0.99        50
+        Rust       1.00      0.98      0.99        51
+
+    accuracy                           0.99       154
+   macro avg       0.99      0.99      0.99       154
+weighted avg       0.99      0.99      0.99       154
