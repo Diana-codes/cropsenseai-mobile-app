@@ -226,8 +226,8 @@ async def predict(file: UploadFile = File(...)):
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         
-        # Resize to match model input (adjust based on your model)
-        image = image.resize((224, 224))
+        # Resize to match model input (trained with IMG_SIZE=128 in notebook)
+        image = image.resize((128, 128))
         image_array = np.array(image) / 255.0
         image_array = np.expand_dims(image_array, axis=0)
         
