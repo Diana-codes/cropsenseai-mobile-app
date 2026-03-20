@@ -59,11 +59,17 @@ class WeatherService:
                 "latitude": coords["latitude"],
                 "longitude": coords["longitude"],
                 "current": "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation",
-                "timezone": "Africa/Kigali"
+                "timezone": "Africa/Kigali",
             }
-            
-            response = requests.get(self.base_url, params=params, timeout=10)
-            response.raise_for_status()
+            # Retry once on failure (helps with Render cold start / transient timeouts)
+            for attempt in range(2):
+                try:
+                    response = requests.get(self.base_url, params=params, timeout=15)
+                    response.raise_for_status()
+                    break
+                except Exception as retry_err:
+                    if attempt == 1:
+                        raise retry_err
             data = response.json()
             
             current_weather = data.get("current", {})
@@ -90,7 +96,8 @@ class WeatherService:
                 "wind_speed": "N/A",
                 "precipitation": 0,
                 "weather_code": "N/A",
-                "error": str(e)
+                "timestamp": "N/A",
+                "error": str(e),
             }
 
 

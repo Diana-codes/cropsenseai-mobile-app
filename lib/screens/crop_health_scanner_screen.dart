@@ -454,7 +454,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Temp: ${weather['temperature']}°C, Humidity: ${weather['humidity']}%, Wind: ${weather['wind_speed']} m/s',
+              'Temp: ${weather['temperature'] ?? 'N/A'}°C, Humidity: ${weather['humidity'] ?? 'N/A'}%, Wind: ${weather['wind_speed'] ?? 'N/A'} m/s',
               style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
@@ -462,7 +462,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Time: ${weather['timestamp']}',
+              'Time: ${weather['timestamp'] ?? 'N/A'}',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary,
