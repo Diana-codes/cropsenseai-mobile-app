@@ -1,10 +1,33 @@
 import csv
+import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
+from zoneinfo import ZoneInfo
 
 import requests
 
 _GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
+_OPENWEATHER_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"
+
+
+def _openweather_id_to_wmo_like(ow_id: int) -> int:
+    """Map OpenWeather condition IDs to WMO-like codes used by the mobile UI."""
+    if ow_id == 800:
+        return 0
+    if 801 <= ow_id <= 804:
+        return 2
+    if 200 <= ow_id < 300:
+        return 95
+    if 300 <= ow_id < 400:
+        return 51
+    if 500 <= ow_id < 600:
+        return 61
+    if 600 <= ow_id < 700:
+        return 71
+    if 700 <= ow_id < 800:
+        return 45
+    return 3
 
 
 class WeatherService:
@@ -86,20 +109,83 @@ class WeatherService:
 
         # Fallback to default Rwanda coordinates (Kigali area)
         return self.rwanda_coords
-    
+
+    def _fetch_openweather(
+        self,
+        coords: Dict[str, float],
+        display_location: str,
+        api_key: str,
+    ) -> Dict:
+        """Current weather from OpenWeather (set OPENWEATHER_API_KEY on the server)."""
+        r = requests.get(
+            _OPENWEATHER_WEATHER_URL,
+            params={
+                "lat": coords["latitude"],
+                "lon": coords["longitude"],
+                "appid": api_key,
+                "units": "metric",
+            },
+            timeout=15,
+        )
+        r.raise_for_status()
+        data = r.json()
+        main = data.get("main") or {}
+        wind = data.get("wind") or {}
+        w0 = (data.get("weather") or [{}])[0]
+        ow_id = int(w0.get("id") or 0)
+        dt_unix = data.get("dt")
+        rain = data.get("rain") or {}
+        precip = float(rain.get("1h") or rain.get("3h") or 0)
+
+        ts_display: str = "N/A"
+        if dt_unix is not None:
+            try:
+                tz_kigali = ZoneInfo("Africa/Kigali")
+                ts_display = datetime.fromtimestamp(
+                    int(dt_unix), tz=timezone.utc
+                ).astimezone(tz_kigali).isoformat()
+            except Exception:
+                ts_display = str(dt_unix)
+
+        return {
+            "location": display_location,
+            "temperature": main.get("temp") if main.get("temp") is not None else "N/A",
+            "humidity": main.get("humidity") if main.get("humidity") is not None else "N/A",
+            "wind_speed": wind.get("speed", "N/A"),
+            "precipitation": precip,
+            "weather_code": _openweather_id_to_wmo_like(ow_id),
+            "timestamp": ts_display,
+            "coordinates": coords,
+            "weather_provider": "openweather",
+            "weather_description": (w0.get("description") or "").strip(),
+        }
+
     def get_weather_data(self, location: str = "Rwanda", province: str = "", district: str = "") -> Dict:
         """Fetch current weather data for a specific location in Rwanda"""
+        coords = self._get_coordinates(province, district)
+        display_location = (
+            location
+            or (f"{district}, {province}" if district and province else province or "Rwanda")
+        )
+
+        api_key = (
+            os.environ.get("OPENWEATHER_API_KEY")
+            or os.environ.get("CROPSENSE_OPENWEATHER_API_KEY")
+            or ""
+        ).strip()
+        if api_key:
+            try:
+                return self._fetch_openweather(coords, display_location, api_key)
+            except Exception as e:
+                print(f"OpenWeather failed, falling back to Open-Meteo: {e}")
+
         try:
-            # Get coordinates for the location
-            coords = self._get_coordinates(province, district)
-            
             params = {
                 "latitude": coords["latitude"],
                 "longitude": coords["longitude"],
                 "current": "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation",
                 "timezone": "Africa/Kigali",
             }
-            # Retry once on failure (helps with Render cold start / transient timeouts)
             for attempt in range(2):
                 try:
                     response = requests.get(self.base_url, params=params, timeout=15)
@@ -109,14 +195,14 @@ class WeatherService:
                     if attempt == 1:
                         raise retry_err
             data = response.json()
-            
+
             current_weather = data.get("current", {})
-            
+
             temp = current_weather.get("temperature_2m")
             humidity = current_weather.get("relative_humidity_2m")
-            
+
             return {
-                "location": location or f"{district}, {province}" if district and province else province or "Rwanda",
+                "location": display_location,
                 "temperature": temp if temp is not None else "N/A",
                 "humidity": humidity if humidity is not None else "N/A",
                 "wind_speed": current_weather.get("wind_speed_10m", "N/A"),
