@@ -10,6 +10,7 @@ import 'process_screen.dart';
 import '../services/api_service.dart';
 import '../services/app_settings.dart';
 import '../services/local_profile_service.dart';
+import '../utils/weather_numeric.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -118,18 +119,12 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
               WeatherCard(
                 location: district.isNotEmpty ? '$district, Rwanda' : 'Rwanda',
-                temperature: _weather != null && _weather!['temperature'] != null
-                    ? (_weather!['temperature'] is num ? (_weather!['temperature'] as num).toInt() : 24)
-                    : 24,
+                temperatureC: WeatherNumeric.parseIntRounded(_weather?['temperature']),
                 condition: _weather != null && _weather!['weather_code'] != null
                     ? _weatherCondition(_weather!['weather_code'])
                     : '☁️ Loading...',
-                humidity: _weather != null && _weather!['humidity'] != null
-                    ? (_weather!['humidity'] is num ? (_weather!['humidity'] as num).toInt() : 60)
-                    : 60,
-                windSpeed: _weather != null && _weather!['wind_speed'] != null
-                    ? (_weather!['wind_speed'] is num ? (_weather!['wind_speed'] as num).toInt() : 10)
-                    : 10,
+                humidityPct: WeatherNumeric.parseIntRounded(_weather?['humidity']),
+                windSpeedKmh: WeatherNumeric.parseIntRounded(_weather?['wind_speed']),
                 forecast: null,
               ),
               const SizedBox(height: 24),

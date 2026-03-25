@@ -3,19 +3,21 @@ import '../utils/colors.dart';
 
 class WeatherCard extends StatelessWidget {
   final String location;
-  final int temperature;
+  /// Null when API value missing or unparseable (avoid fake defaults like 24°C).
+  final int? temperatureC;
   final String condition;
-  final int humidity;
-  final int windSpeed;
+  final int? humidityPct;
+  /// Wind in km/h when known (backend normalizes Open-Meteo/OpenWeather).
+  final int? windSpeedKmh;
   final List<WeatherForecast>? forecast;
 
   const WeatherCard({
     super.key,
     required this.location,
-    required this.temperature,
+    required this.temperatureC,
     required this.condition,
-    required this.humidity,
-    required this.windSpeed,
+    required this.humidityPct,
+    required this.windSpeedKmh,
     this.forecast,
   });
 
@@ -53,7 +55,7 @@ class WeatherCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '$humidity%',
+                          humidityPct != null ? '$humidityPct%' : '—%',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 13,
@@ -66,7 +68,7 @@ class WeatherCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          '$windSpeed km/h',
+                          windSpeedKmh != null ? '$windSpeedKmh km/h' : '— km/h',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 13,
@@ -89,7 +91,7 @@ class WeatherCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$temperature',
+                        temperatureC != null ? '$temperatureC' : '—',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 48,

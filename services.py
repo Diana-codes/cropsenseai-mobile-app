@@ -137,6 +137,15 @@ class WeatherService:
         rain = data.get("rain") or {}
         precip = float(rain.get("1h") or rain.get("3h") or 0)
 
+        # OpenWeather `metric` wind.speed is m/s — UI expects km/h (same as Open-Meteo path).
+        wind_speed_kmh: object = "N/A"
+        wspd = wind.get("speed")
+        if wspd is not None:
+            try:
+                wind_speed_kmh = round(float(wspd) * 3.6, 1)
+            except (TypeError, ValueError):
+                wind_speed_kmh = "N/A"
+
         ts_display: str = "N/A"
         if dt_unix is not None:
             try:
@@ -151,7 +160,7 @@ class WeatherService:
             "location": display_location,
             "temperature": main.get("temp") if main.get("temp") is not None else "N/A",
             "humidity": main.get("humidity") if main.get("humidity") is not None else "N/A",
-            "wind_speed": wind.get("speed", "N/A"),
+            "wind_speed": wind_speed_kmh,
             "precipitation": precip,
             "weather_code": _openweather_id_to_wmo_like(ow_id),
             "timestamp": ts_display,
@@ -185,6 +194,7 @@ class WeatherService:
                 "longitude": coords["longitude"],
                 "current": "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation",
                 "timezone": "Africa/Kigali",
+                "wind_speed_unit": "kmh",
             }
             for attempt in range(2):
                 try:
