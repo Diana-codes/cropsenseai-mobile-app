@@ -127,28 +127,26 @@ _init_db()
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-def _require_packages():
-    # Lazy import so server can start even if optional ML deps differ.
-    from passlib.context import CryptContext
-    from jose import jwt
-    return CryptContext(schemes=["bcrypt"], deprecated="auto"), jwt
-
 def _hash_password(password: str) -> str:
-    pwd_context, _ = _require_packages()
-    return pwd_context.hash(password)
+    import bcrypt
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 def _verify_password(password: str, password_hash: str) -> bool:
-    pwd_context, _ = _require_packages()
-    return pwd_context.verify(password, password_hash)
+    import bcrypt
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    except Exception:
+        return False
 
 def _create_token(user_id: int, email: str) -> str:
-    _, jwt = _require_packages()
+    from jose import jwt
     exp = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRES_HOURS)
     payload = {"sub": str(user_id), "email": email, "exp": exp}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 def _decode_token(token: str) -> dict:
-    _, jwt = _require_packages()
+    from jose import jwt
     return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
 
 def _row_to_dict(row) -> dict:
