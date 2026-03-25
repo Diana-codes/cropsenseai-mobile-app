@@ -219,7 +219,6 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     child: ElevatedButton(
                       onPressed: _province.isNotEmpty &&
                               _district.isNotEmpty &&
-                              _sector.isNotEmpty &&
                               _season.isNotEmpty &&
                               _landType.isNotEmpty
                           ? () {

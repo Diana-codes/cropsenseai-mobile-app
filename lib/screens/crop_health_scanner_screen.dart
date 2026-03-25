@@ -28,6 +28,38 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
   String? _errorMessage;
   Map<String, dynamic>? _result;
 
+  bool _isWeatherMissing(Map<String, dynamic>? weather) {
+    if (weather == null) return true;
+    final temp = weather['temperature'];
+    final humidity = weather['humidity'];
+    final wind = weather['wind_speed'];
+    final time = weather['timestamp'];
+    return temp == null ||
+        humidity == null ||
+        wind == null ||
+        time == null ||
+        temp.toString() == 'N/A' ||
+        humidity.toString() == 'N/A' ||
+        wind.toString() == 'N/A' ||
+        time.toString() == 'N/A';
+  }
+
+  Future<Map<String, dynamic>?> _fetchWeatherFallback() async {
+    try {
+      final uri = Uri.parse('$_defaultApiBaseUrl/weather').replace(
+        queryParameters: const {'location': 'Rwanda'},
+      );
+      final response = await http.get(uri).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Weather request timed out'),
+      );
+      if (response.statusCode != 200) return null;
+      return jsonDecode(response.body) as Map<String, dynamic>?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     setState(() {
       _errorMessage = null;
@@ -72,6 +104,13 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final weather = data['weather'] as Map<String, dynamic>?;
+      if (_isWeatherMissing(weather)) {
+        final fallbackWeather = await _fetchWeatherFallback();
+        if (fallbackWeather != null) {
+          data['weather'] = fallbackWeather;
+        }
+      }
       setState(() {
         _result = data;
       });
