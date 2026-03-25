@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 import '../utils/colors.dart';
+import '../services/api_service.dart';
 
 // Default to localhost (works for Flutter web and when running on the same machine
 // as the backend). For Android emulator, override with:
@@ -45,19 +46,10 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
   }
 
   Future<Map<String, dynamic>?> _fetchWeatherFallback() async {
-    try {
-      final uri = Uri.parse('$_defaultApiBaseUrl/weather').replace(
-        queryParameters: const {'location': 'Rwanda'},
-      );
-      final response = await http.get(uri).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Weather request timed out'),
-      );
-      if (response.statusCode != 200) return null;
-      return jsonDecode(response.body) as Map<String, dynamic>?;
-    } catch (_) {
-      return null;
-    }
+    // Use ApiService so we get the same retry/fallback behavior as other screens.
+    return ApiService.getWeather(
+      location: 'Rwanda',
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
