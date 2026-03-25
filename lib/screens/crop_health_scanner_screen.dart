@@ -11,7 +11,7 @@ import '../utils/colors.dart';
 // as the backend). For Android emulator, override with:
 // flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 const String _defaultApiBaseUrl =
-    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8000');
+    String.fromEnvironment('API_BASE_URL', defaultValue: 'https://cropsenseai-mobile-app.onrender.com');
 
 class CropHealthScannerScreen extends StatefulWidget {
   const CropHealthScannerScreen({super.key});

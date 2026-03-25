@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 /// Shared API service for CropSense backend.
 const String _apiBaseUrl =
-    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8000');
+    String.fromEnvironment('API_BASE_URL', defaultValue: 'https://cropsenseai-mobile-app.onrender.com');
 
 class ApiService {
   static String get baseUrl => _apiBaseUrl;
