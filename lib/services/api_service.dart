@@ -57,7 +57,13 @@ class ApiService {
     String province = '',
     String district = '',
   }) async {
-    // Retry/fallback because Open-Meteo can occasionally return partial/placeholder data.
+    // Retry because Open-Meteo can occasionally return partial data. Never drop
+    // province/district on the first retries — clearing them forced Kigali coords
+    // for everyone and made Rwamagana vs Kigali look identical.
+    Future<void> shortDelay() => Future<void>.delayed(
+          Duration(milliseconds: Random().nextInt(150)),
+        );
+
     final first = await _getWeatherOnce(
       location: location,
       province: province,
@@ -65,11 +71,27 @@ class ApiService {
     );
     if (_weatherHasValidFields(first)) return first;
 
-    // Fallback to server default (Rwanda coordinates) for better stability.
-    await Future<void>.delayed(
-      Duration(milliseconds: Random().nextInt(150)),
+    await shortDelay();
+    final second = await _getWeatherOnce(
+      location: location,
+      province: province,
+      district: district,
     );
+    if (_weatherHasValidFields(second)) return second;
 
+    // Province-level only (still distinct from other provinces)
+    if (province.isNotEmpty) {
+      await shortDelay();
+      final third = await _getWeatherOnce(
+        location: province,
+        province: province,
+        district: '',
+      );
+      if (_weatherHasValidFields(third)) return third;
+    }
+
+    // Last resort: national default on the server (Kigali-area default coords)
+    await shortDelay();
     return _getWeatherOnce(
       location: 'Rwanda',
       province: '',

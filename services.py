@@ -4,6 +4,8 @@ from typing import Dict, List, Optional
 
 import requests
 
+_GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
+
 
 class WeatherService:
     """Service to fetch weather data for Rwanda locations"""
@@ -30,8 +32,38 @@ class WeatherService:
             "musanze": {"latitude": -1.5000, "longitude": 29.6167},
             "huye": {"latitude": -2.4667, "longitude": 29.7500},
             "rubavu": {"latitude": -1.6833, "longitude": 29.3167},
+            # Eastern Province — was missing; province centroid is coarse
+            "rwamagana": {"latitude": -1.9487, "longitude": 30.4347},
+            # Kigali City districts (distinct from each other / from Eastern Province)
+            "kicukiro": {"latitude": -2.0014, "longitude": 30.1002},
+            "nyarugenge": {"latitude": -1.9536, "longitude": 29.8739},
         }
-    
+
+    def _geocode_rwanda(self, query: str) -> Optional[Dict[str, float]]:
+        """Resolve a place name inside Rwanda using Open-Meteo geocoding (free, no API key)."""
+        q = (query or "").strip()
+        if not q:
+            return None
+        try:
+            r = requests.get(
+                _GEOCODE_URL,
+                params={"name": q, "count": 8, "language": "en"},
+                timeout=10,
+            )
+            r.raise_for_status()
+            payload = r.json()
+            for res in payload.get("results") or []:
+                cc = (res.get("country_code") or "").upper()
+                country = (res.get("country") or "").lower()
+                if cc == "RW" or "rwanda" in country:
+                    return {
+                        "latitude": float(res["latitude"]),
+                        "longitude": float(res["longitude"]),
+                    }
+        except Exception as e:
+            print(f"Geocoding failed for {q!r}: {e}")
+        return None
+
     def _get_coordinates(self, province: str = "", district: str = "") -> Dict[str, float]:
         """Get coordinates for a location, falling back to defaults"""
         # Try district first (more specific)
@@ -39,14 +71,20 @@ class WeatherService:
             district_key = district.lower().strip()
             if district_key in self.location_coords:
                 return self.location_coords[district_key]
-        
-        # Try province
+            geo = self._geocode_rwanda(district)
+            if geo:
+                return geo
+
+        # Try province name / centroid table
         if province:
             province_key = province.lower().strip()
             if province_key in self.location_coords:
                 return self.location_coords[province_key]
-        
-        # Fallback to default Rwanda coordinates
+            geo = self._geocode_rwanda(province)
+            if geo:
+                return geo
+
+        # Fallback to default Rwanda coordinates (Kigali area)
         return self.rwanda_coords
     
     def get_weather_data(self, location: str = "Rwanda", province: str = "", district: str = "") -> Dict:
@@ -85,7 +123,8 @@ class WeatherService:
                 "precipitation": current_weather.get("precipitation", 0),
                 "weather_code": current_weather.get("weather_code", "N/A"),
                 "timestamp": current_weather.get("time", "N/A"),
-                "coordinates": coords
+                "coordinates": coords,
+                "weather_provider": "open-meteo",
             }
         except Exception as e:
             print(f"Error fetching weather data for {location}: {e}")
