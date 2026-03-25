@@ -46,16 +46,56 @@ CLASS_NAMES: list[str] = []  # Fallback: from model_metadata.json
 security = HTTPBearer(auto_error=False)
 
 DB_PATH = os.environ.get("CROPSENSE_DB_PATH", "cropsense.db")
+DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("CROPSENSE_DATABASE_URL")
 JWT_SECRET = os.environ.get("CROPSENSE_JWT_SECRET", "CHANGE_ME_IN_PRODUCTION")
 JWT_ALG = "HS256"
 JWT_EXPIRES_HOURS = int(os.environ.get("CROPSENSE_JWT_EXPIRES_HOURS", "168"))  # 7 days
 
+def _is_postgres() -> bool:
+    return bool(DATABASE_URL and DATABASE_URL.strip())
+
+def _pg_connect():
+    # psycopg2 is only needed in production when DATABASE_URL is set
+    import psycopg2
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
+
 def _db() -> sqlite3.Connection:
+    # SQLite fallback for local development only.
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def _init_db() -> None:
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                  id SERIAL PRIMARY KEY,
+                  email TEXT UNIQUE NOT NULL,
+                  password_hash TEXT NOT NULL,
+                  full_name TEXT NOT NULL,
+                  phone TEXT DEFAULT '',
+                  province TEXT DEFAULT '',
+                  district TEXT DEFAULT '',
+                  sector TEXT DEFAULT '',
+                  cell TEXT DEFAULT '',
+                  village TEXT DEFAULT '',
+                  land_size DOUBLE PRECISION,
+                  soil_type TEXT DEFAULT '',
+                  created_at TIMESTAMPTZ NOT NULL,
+                  updated_at TIMESTAMPTZ NOT NULL
+                );
+                """
+            )
+            conn.commit()
+        finally:
+            conn.close()
+        return
+
+    # SQLite fallback
     conn = _db()
     try:
         conn.execute(
@@ -111,7 +151,15 @@ def _decode_token(token: str) -> dict:
     _, jwt = _require_packages()
     return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
 
-def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> sqlite3.Row:
+def _row_to_dict(row) -> dict:
+    # sqlite3.Row supports dict(row); psycopg2 returns tuples
+    if row is None:
+        return {}
+    if isinstance(row, sqlite3.Row):
+        return dict(row)
+    return dict(row)
+
+def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(security)):
     if creds is None or not creds.credentials:
         raise HTTPException(status_code=401, detail="Missing bearer token")
     try:
@@ -120,12 +168,25 @@ def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(sec
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(status_code=401, detail="User not found")
+            cols = [d[0] for d in cur.description]
+            return dict(zip(cols, row))
+        finally:
+            conn.close()
+
     conn = _db()
     try:
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         if row is None:
             raise HTTPException(status_code=401, detail="User not found")
-        return row
+        return dict(row)
     finally:
         conn.close()
 
@@ -145,23 +206,57 @@ async def auth_register(payload: dict):
     if not full_name:
         raise HTTPException(status_code=400, detail="Full name is required")
 
+    password_hash = _hash_password(password)
+
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            now = datetime.now(timezone.utc)
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO users (email, password_hash, full_name, phone, province, district, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING *
+                    """,
+                    (email, password_hash, full_name, phone, province, district, now, now),
+                )
+                row = cur.fetchone()
+                cols = [d[0] for d in cur.description]
+                user = dict(zip(cols, row))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                # Unique violation
+                if "duplicate key value" in str(e).lower():
+                    raise HTTPException(status_code=409, detail="Email already registered")
+                raise
+            token = _create_token(int(user["id"]), user["email"])
+            user.pop("password_hash", None)
+            return {"access_token": token, "token_type": "bearer", "profile": user}
+        finally:
+            conn.close()
+
     conn = _db()
     try:
-        password_hash = _hash_password(password)
         now = _now_iso()
-        conn.execute(
-            """
-            INSERT INTO users (email, password_hash, full_name, phone, province, district, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (email, password_hash, full_name, phone, province, district, now, now),
-        )
-        conn.commit()
+        try:
+            conn.execute(
+                """
+                INSERT INTO users (email, password_hash, full_name, phone, province, district, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (email, password_hash, full_name, phone, province, district, now, now),
+            )
+            conn.commit()
+        except sqlite3.IntegrityError:
+            raise HTTPException(status_code=409, detail="Email already registered")
         user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         token = _create_token(user["id"], user["email"])
-        return {"access_token": token, "token_type": "bearer", "profile": dict(user)}
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=409, detail="Email already registered")
+        prof = dict(user)
+        prof.pop("password_hash", None)
+        return {"access_token": token, "token_type": "bearer", "profile": prof}
     finally:
         conn.close()
 
@@ -172,24 +267,44 @@ async def auth_login(payload: dict):
     if not email or not password:
         raise HTTPException(status_code=400, detail="Email and password are required")
 
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(status_code=401, detail="Invalid email or password")
+            cols = [d[0] for d in cur.description]
+            user = dict(zip(cols, row))
+            if not _verify_password(password, user["password_hash"]):
+                raise HTTPException(status_code=401, detail="Invalid email or password")
+            token = _create_token(int(user["id"]), user["email"])
+            user.pop("password_hash", None)
+            return {"access_token": token, "token_type": "bearer", "profile": user}
+        finally:
+            conn.close()
+
     conn = _db()
     try:
         user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         if user is None or not _verify_password(password, user["password_hash"]):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         token = _create_token(user["id"], user["email"])
-        return {"access_token": token, "token_type": "bearer", "profile": dict(user)}
+        prof = dict(user)
+        prof.pop("password_hash", None)
+        return {"access_token": token, "token_type": "bearer", "profile": prof}
     finally:
         conn.close()
 
 @app.get("/auth/me")
-async def auth_me(user: sqlite3.Row = Depends(get_current_user)):
+async def auth_me(user: dict = Depends(get_current_user)):
     u = dict(user)
     u.pop("password_hash", None)
     return {"profile": u}
 
 @app.put("/auth/profile")
-async def auth_update_profile(payload: dict, user: sqlite3.Row = Depends(get_current_user)):
+async def auth_update_profile(payload: dict, user: dict = Depends(get_current_user)):
     fields = {
         "full_name": payload.get("full_name"),
         "phone": payload.get("phone"),
@@ -205,10 +320,26 @@ async def auth_update_profile(payload: dict, user: sqlite3.Row = Depends(get_cur
     if not updates:
         return {"profile": {k: user[k] for k in user.keys() if k != "password_hash"}}
 
+    if _is_postgres():
+        updates["updated_at"] = datetime.now(timezone.utc)
+        sets = ", ".join([f"{k} = %s" for k in updates.keys()])
+        values = list(updates.values()) + [user["id"]]
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(f"UPDATE users SET {sets} WHERE id = %s RETURNING *", values)
+            row = cur.fetchone()
+            cols = [d[0] for d in cur.description]
+            new_user = dict(zip(cols, row))
+            conn.commit()
+            new_user.pop("password_hash", None)
+            return {"profile": new_user}
+        finally:
+            conn.close()
+
     updates["updated_at"] = _now_iso()
     sets = ", ".join([f"{k} = ?" for k in updates.keys()])
     values = list(updates.values()) + [user["id"]]
-
     conn = _db()
     try:
         conn.execute(f"UPDATE users SET {sets} WHERE id = ?", values)
