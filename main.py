@@ -97,6 +97,28 @@ def _init_db() -> None:
                 );
                 """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS season_plans (
+                  id SERIAL PRIMARY KEY,
+                  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                  province TEXT NOT NULL DEFAULT '',
+                  district TEXT NOT NULL DEFAULT '',
+                  sector TEXT NOT NULL DEFAULT '',
+                  cell TEXT NOT NULL DEFAULT '',
+                  village TEXT NOT NULL DEFAULT '',
+                  season TEXT NOT NULL DEFAULT '',
+                  land_type TEXT NOT NULL DEFAULT '',
+                  land_size TEXT NOT NULL DEFAULT '',
+                  primary_crop TEXT NOT NULL DEFAULT '',
+                  advisor_json TEXT NOT NULL DEFAULT '{}',
+                  stages_json TEXT NOT NULL DEFAULT '[]',
+                  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                  created_at TIMESTAMPTZ NOT NULL,
+                  updated_at TIMESTAMPTZ NOT NULL
+                );
+                """
+            )
             conn.commit()
         finally:
             conn.close()
@@ -120,6 +142,28 @@ def _init_db() -> None:
               village TEXT DEFAULT '',
               land_size REAL,
               soil_type TEXT DEFAULT '',
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            );
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS season_plans (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              province TEXT NOT NULL DEFAULT '',
+              district TEXT NOT NULL DEFAULT '',
+              sector TEXT NOT NULL DEFAULT '',
+              cell TEXT NOT NULL DEFAULT '',
+              village TEXT NOT NULL DEFAULT '',
+              season TEXT NOT NULL DEFAULT '',
+              land_type TEXT NOT NULL DEFAULT '',
+              land_size TEXT NOT NULL DEFAULT '',
+              primary_crop TEXT NOT NULL DEFAULT '',
+              advisor_json TEXT NOT NULL DEFAULT '{}',
+              stages_json TEXT NOT NULL DEFAULT '[]',
+              is_active INTEGER NOT NULL DEFAULT 1,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL
             );
@@ -355,6 +399,338 @@ async def auth_update_profile(payload: dict, user: dict = Depends(get_current_us
         return {"profile": u}
     finally:
         conn.close()
+
+
+# --- Season plans (live on server; tied to authenticated user) ---
+
+DEFAULT_SEASON_STAGES = [
+    {
+        "key": "prepare_land",
+        "title": "Prepare land",
+        "description": "Clear residues and weeds, test soil where possible, and plan inputs before the rains.",
+        "done": False,
+        "completed_at": None,
+    },
+    {
+        "key": "plant_establish",
+        "title": "Plant & establish crop",
+        "description": "Choose recommended varieties for your province and season, and plant at the right spacing.",
+        "done": False,
+        "completed_at": None,
+    },
+    {
+        "key": "manage_season",
+        "title": "Manage crop during season",
+        "description": "Monitor for pests, diseases, and nutrient stress. Use Crop Health Scanner and local advice to guide actions.",
+        "done": False,
+        "completed_at": None,
+    },
+    {
+        "key": "harvest",
+        "title": "Harvest at the right time",
+        "description": "Avoid harvesting too early or too late so that yield and quality are not lost.",
+        "done": False,
+        "completed_at": None,
+    },
+    {
+        "key": "post_harvest",
+        "title": "Post-harvest handling & storage",
+        "description": "Dry and store grain safely, or market fresh produce quickly to reduce losses.",
+        "done": False,
+        "completed_at": None,
+    },
+]
+
+
+def _json_loads_field(raw, default):
+    if raw is None:
+        return default
+    if isinstance(raw, (dict, list)):
+        return raw
+    if isinstance(raw, str):
+        s = raw.strip()
+        if not s:
+            return default
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            return default
+    return default
+
+
+def _season_plan_row_to_api(row: dict) -> dict:
+    advisor = _json_loads_field(row.get("advisor_json"), {})
+    stages = _json_loads_field(row.get("stages_json"), [])
+    active = row.get("is_active")
+    if isinstance(active, int):
+        active = bool(active)
+    return {
+        "id": row["id"],
+        "province": row.get("province") or "",
+        "district": row.get("district") or "",
+        "sector": row.get("sector") or "",
+        "cell": row.get("cell") or "",
+        "village": row.get("village") or "",
+        "season": row.get("season") or "",
+        "land_type": row.get("land_type") or "",
+        "land_size": row.get("land_size") or "",
+        "primary_crop": row.get("primary_crop") or "",
+        "advisor": advisor,
+        "stages": stages,
+        "is_active": bool(active),
+        "created_at": str(row.get("created_at", "")),
+        "updated_at": str(row.get("updated_at", "")),
+    }
+
+
+def _merge_stage_updates(stages: list, updates: list) -> list:
+    patch = {}
+    for u in updates:
+        if not isinstance(u, dict):
+            continue
+        key = (u.get("key") or "").strip()
+        if key:
+            patch[key] = u
+    base = stages if stages else list(DEFAULT_SEASON_STAGES)
+    out = []
+    for s in base:
+        if not isinstance(s, dict):
+            continue
+        key = (s.get("key") or "").strip()
+        if not key:
+            continue
+        item = dict(s)
+        if key in patch:
+            u = patch[key]
+            if u.get("done") is True:
+                item["done"] = True
+                item["completed_at"] = _now_iso()
+            elif u.get("done") is False:
+                item["done"] = False
+                item["completed_at"] = None
+        out.append(item)
+    return out
+
+
+@app.get("/season-plans/active")
+async def season_plans_active(user: dict = Depends(get_current_user)):
+    """Return the current active season plan for this user, or null."""
+    uid = int(user["id"])
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT * FROM season_plans
+                WHERE user_id = %s AND is_active = TRUE
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (uid,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return {"plan": None}
+            cols = [d[0] for d in cur.description]
+            return {"plan": _season_plan_row_to_api(dict(zip(cols, row)))}
+        finally:
+            conn.close()
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            """
+            SELECT * FROM season_plans
+            WHERE user_id = ? AND is_active = 1
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (uid,),
+        ).fetchone()
+        if row is None:
+            return {"plan": None}
+        return {"plan": _season_plan_row_to_api(dict(row))}
+    finally:
+        conn.close()
+
+
+@app.post("/season-plans")
+async def season_plans_create(payload: dict, user: dict = Depends(get_current_user)):
+    """
+    Save a new active season plan (deactivates previous active plans for this user).
+    Body: province, district, sector, cell, village, season, land_type, land_size, advisor (object, optional).
+    """
+    uid = int(user["id"])
+    province = (payload.get("province") or "").strip()
+    district = (payload.get("district") or "").strip()
+    sector = (payload.get("sector") or "").strip()
+    cell = (payload.get("cell") or "").strip()
+    village = (payload.get("village") or "").strip()
+    season = (payload.get("season") or "").strip()
+    land_type = (payload.get("land_type") or "").strip()
+    land_size = (payload.get("land_size") or "").strip()
+    advisor = payload.get("advisor")
+    if advisor is not None and not isinstance(advisor, dict):
+        raise HTTPException(status_code=400, detail="advisor must be an object if provided")
+    advisor_obj = advisor if isinstance(advisor, dict) else {}
+    best = advisor_obj.get("best_match") if advisor_obj else None
+    primary_crop = (payload.get("primary_crop") or "").strip()
+    if not primary_crop and isinstance(best, dict):
+        primary_crop = (best.get("crop") or "").strip()
+    advisor_str = json.dumps(advisor_obj, ensure_ascii=False)
+    stages_str = json.dumps(list(DEFAULT_SEASON_STAGES), ensure_ascii=False)
+    now_pg = datetime.now(timezone.utc)
+    now_sqlite = _now_iso()
+
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE season_plans SET is_active = FALSE, updated_at = %s WHERE user_id = %s",
+                (now_pg, uid),
+            )
+            cur.execute(
+                """
+                INSERT INTO season_plans (
+                  user_id, province, district, sector, cell, village, season, land_type, land_size,
+                  primary_crop, advisor_json, stages_json, is_active, created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s)
+                RETURNING *
+                """,
+                (
+                    uid,
+                    province,
+                    district,
+                    sector,
+                    cell,
+                    village,
+                    season,
+                    land_type,
+                    land_size,
+                    primary_crop,
+                    advisor_str,
+                    stages_str,
+                    now_pg,
+                    now_pg,
+                ),
+            )
+            row = cur.fetchone()
+            cols = [d[0] for d in cur.description]
+            conn.commit()
+            return {"plan": _season_plan_row_to_api(dict(zip(cols, row)))}
+        except Exception as e:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=f"Could not save season plan: {e}") from e
+        finally:
+            conn.close()
+
+    conn = _db()
+    try:
+        conn.execute(
+            "UPDATE season_plans SET is_active = 0, updated_at = ? WHERE user_id = ?",
+            (now_sqlite, uid),
+        )
+        conn.execute(
+            """
+            INSERT INTO season_plans (
+              user_id, province, district, sector, cell, village, season, land_type, land_size,
+              primary_crop, advisor_json, stages_json, is_active, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+            """,
+            (
+                uid,
+                province,
+                district,
+                sector,
+                cell,
+                village,
+                season,
+                land_type,
+                land_size,
+                primary_crop,
+                advisor_str,
+                stages_str,
+                now_sqlite,
+                now_sqlite,
+            ),
+        )
+        conn.commit()
+        new_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        row = conn.execute("SELECT * FROM season_plans WHERE id = ?", (new_id,)).fetchone()
+        return {"plan": _season_plan_row_to_api(dict(row))}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Could not save season plan: {e}") from e
+    finally:
+        conn.close()
+
+
+@app.patch("/season-plans/{plan_id}/stages")
+async def season_plans_patch_stages(
+    plan_id: int,
+    payload: dict,
+    user: dict = Depends(get_current_user),
+):
+    """Update stage completion. Body: { \"stages\": [ {\"key\": \"prepare_land\", \"done\": true }, ... ] }"""
+    uid = int(user["id"])
+    updates = payload.get("stages")
+    if not isinstance(updates, list) or not updates:
+        raise HTTPException(status_code=400, detail="stages must be a non-empty list")
+
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM season_plans WHERE id = %s AND user_id = %s",
+                (plan_id, uid),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(status_code=404, detail="Season plan not found")
+            cols = [d[0] for d in cur.description]
+            plan = dict(zip(cols, row))
+            stages = _json_loads_field(plan.get("stages_json"), [])
+            merged = _merge_stage_updates(stages, updates)
+            new_str = json.dumps(merged, ensure_ascii=False)
+            now_pg = datetime.now(timezone.utc)
+            cur.execute(
+                "UPDATE season_plans SET stages_json = %s, updated_at = %s WHERE id = %s AND user_id = %s",
+                (new_str, now_pg, plan_id, uid),
+            )
+            conn.commit()
+            cur.execute("SELECT * FROM season_plans WHERE id = %s", (plan_id,))
+            row2 = cur.fetchone()
+            cols2 = [d[0] for d in cur.description]
+            return {"plan": _season_plan_row_to_api(dict(zip(cols2, row2)))}
+        finally:
+            conn.close()
+
+    conn = _db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM season_plans WHERE id = ? AND user_id = ?",
+            (plan_id, uid),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Season plan not found")
+        plan = dict(row)
+        stages = _json_loads_field(plan.get("stages_json"), [])
+        merged = _merge_stage_updates(stages, updates)
+        new_str = json.dumps(merged, ensure_ascii=False)
+        now_sqlite = _now_iso()
+        conn.execute(
+            "UPDATE season_plans SET stages_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+            (new_str, now_sqlite, plan_id, uid),
+        )
+        conn.commit()
+        row2 = conn.execute("SELECT * FROM season_plans WHERE id = ?", (plan_id,)).fetchone()
+        return {"plan": _season_plan_row_to_api(dict(row2))}
+    finally:
+        conn.close()
+
 
 def load_model():
     """

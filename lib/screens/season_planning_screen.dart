@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../data/rwanda_locations.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class SeasonPlanningScreen extends StatefulWidget {
   const SeasonPlanningScreen({super.key});
@@ -22,6 +23,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
   String _landSize = '';
   Map<String, dynamic>? _advisorData;
   bool _isLoadingAdvisor = false;
+  bool _savingPlan = false;
 
   @override
   Widget build(BuildContext context) {
@@ -464,9 +466,61 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: _savingPlan
+                ? null
+                : () async {
+                    setState(() => _savingPlan = true);
+                    final auth = AuthService();
+                    final token = await auth.getToken();
+                    if (token != null &&
+                        token.isNotEmpty &&
+                        _advisorData != null) {
+                      final saved = await ApiService.createSeasonPlan(
+                        token: token,
+                        province: _province,
+                        district: _district,
+                        sector: _sector,
+                        cell: _cell,
+                        village: _village,
+                        season: _season,
+                        landType: _landType,
+                        landSize: _landSize,
+                        advisor: _advisorData,
+                      );
+                      if (!mounted) return;
+                      if (saved != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Season plan saved to your account. Use Process to track stages.',
+                            ),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Could not save plan. Check connection and try again.',
+                            ),
+                          ),
+                        );
+                      }
+                    } else if (mounted &&
+                        (token == null || token.isEmpty) &&
+                        _advisorData != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Sign in to save this plan to your account.',
+                          ),
+                        ),
+                      );
+                    }
+                    if (mounted) {
+                      setState(() => _savingPlan = false);
+                      Navigator.pop(context);
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -475,13 +529,22 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: _savingPlan
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ),
       ],

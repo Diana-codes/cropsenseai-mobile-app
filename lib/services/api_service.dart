@@ -169,4 +169,97 @@ class ApiService {
 
   /// Same as above, but public for use in screens.
   static String normalizeLandType(String display) => _normalizeLandType(display);
+
+  static Map<String, String> _authJsonHeaders(String token) => {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+  /// Active season plan from server (requires login). Null if none or error.
+  static Future<Map<String, dynamic>?> getActiveSeasonPlan(String? token) async {
+    if (token == null || token.isEmpty) return null;
+    try {
+      final res = await http
+          .get(
+            Uri.parse('$_apiBaseUrl/season-plans/active'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 15));
+      if (res.statusCode != 200) return null;
+      final decoded = jsonDecode(res.body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final plan = decoded['plan'];
+      if (plan is Map<String, dynamic>) return plan;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Save a new active season plan (replaces previous active plan on server).
+  static Future<Map<String, dynamic>?> createSeasonPlan({
+    required String token,
+    required String province,
+    required String district,
+    required String sector,
+    required String cell,
+    required String village,
+    required String season,
+    required String landType,
+    required String landSize,
+    Map<String, dynamic>? advisor,
+  }) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$_apiBaseUrl/season-plans'),
+            headers: _authJsonHeaders(token),
+            body: jsonEncode({
+              'province': province,
+              'district': district,
+              'sector': sector,
+              'cell': cell,
+              'village': village,
+              'season': season,
+              'land_type': landType,
+              'land_size': landSize,
+              if (advisor != null) 'advisor': advisor,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+      if (res.statusCode != 200) return null;
+      final decoded = jsonDecode(res.body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final plan = decoded['plan'];
+      if (plan is Map<String, dynamic>) return plan;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Update one or more stages (e.g. `{key, done}`). Returns updated plan.
+  static Future<Map<String, dynamic>?> updateSeasonPlanStages({
+    required String token,
+    required int planId,
+    required List<Map<String, dynamic>> stages,
+  }) async {
+    try {
+      final res = await http
+          .patch(
+            Uri.parse('$_apiBaseUrl/season-plans/$planId/stages'),
+            headers: _authJsonHeaders(token),
+            body: jsonEncode({'stages': stages}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (res.statusCode != 200) return null;
+      final decoded = jsonDecode(res.body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final plan = decoded['plan'];
+      if (plan is Map<String, dynamic>) return plan;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 }

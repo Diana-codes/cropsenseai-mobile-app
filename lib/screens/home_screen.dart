@@ -9,6 +9,7 @@ import 'season_planning_screen.dart';
 import 'process_screen.dart';
 import '../services/api_service.dart';
 import '../services/app_settings.dart';
+import '../services/auth_service.dart';
 import '../services/local_profile_service.dart';
 import '../utils/weather_numeric.dart';
 
@@ -26,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingProfile = true;
   Map<String, dynamic>? _weather;
   Map<String, dynamic>? _advisorData;
+  Map<String, dynamic>? _activeSeasonPlan;
 
   @override
   void initState() {
@@ -49,22 +51,44 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '$district, $province'
         : 'Rwanda';
 
+    final token = await AuthService().getToken();
+    final activePlan = (token != null && token.isNotEmpty)
+        ? await ApiService.getActiveSeasonPlan(token)
+        : null;
+
     final weather = await ApiService.getWeather(
       location: location,
       province: province,
       district: district,
     );
-    if (mounted) setState(() => _weather = weather);
+    if (mounted) {
+      setState(() {
+        _weather = weather;
+        _activeSeasonPlan = activePlan;
+      });
+    }
+
+    final seasonLabel = (activePlan != null &&
+            (activePlan['season']?.toString().trim().isNotEmpty ?? false))
+        ? activePlan['season'].toString()
+        : 'Season A (Sept - Jan)';
+    final landTypeLabel = (activePlan != null &&
+            (activePlan['land_type']?.toString().trim().isNotEmpty ?? false))
+        ? ApiService.normalizeLandType(activePlan['land_type'].toString())
+        : 'Wetland';
+    final sectorHint = (profile?['sector'] ?? activePlan?['sector'] ?? '').toString();
 
     if (province.isNotEmpty && district.isNotEmpty) {
       final advisor = await ApiService.getAdvisorRecommendations(
         province: province,
         district: district,
-        sector: profile?['sector'] ?? '',
-        season: 'Season A (Sept - Jan)',
-        landType: 'Wetland',
+        sector: sectorHint,
+        season: seasonLabel,
+        landType: landTypeLabel,
       );
       if (mounted) setState(() => _advisorData = advisor);
+    } else if (mounted) {
+      setState(() => _advisorData = null);
     }
   }
 
@@ -208,7 +232,56 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              if (_advisorData != null && _advisorData!['best_match'] != null) ...[
+              if (_activeSeasonPlan != null &&
+                  (_activeSeasonPlan!['primary_crop']?.toString().trim().isNotEmpty ??
+                      false)) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'My current plan (saved)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Crop: ${_activeSeasonPlan!['primary_crop']}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Location: ${_activeSeasonPlan!['district']}, ${_activeSeasonPlan!['province']} • ${_activeSeasonPlan!['season']}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ] else if (_advisorData != null && _advisorData!['best_match'] != null) ...[
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
