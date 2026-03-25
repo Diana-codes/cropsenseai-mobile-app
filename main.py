@@ -2,7 +2,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-import tensorflow as tf
 from PIL import Image
 import numpy as np
 import io
@@ -38,6 +37,14 @@ app.add_middleware(
 model = None
 label_encoder = None  # Optional: from sklearn
 CLASS_NAMES: list[str] = []  # Fallback: from model_metadata.json
+MODEL_LOAD_ERROR: str | None = None
+
+def _tf_enabled() -> bool:
+    """
+    TensorFlow import/model loading is opt-in because some hosted Linux
+    environments can segfault on TF import (native deps / CPU features).
+    """
+    return os.environ.get("CROPSENSE_ENABLE_TF", "").strip().lower() in {"1", "true", "yes", "on"}
 
 #
 # --- Simple Auth (SQLite + JWT) ---
@@ -354,8 +361,16 @@ def load_model():
     Load model from Hugging Face (if configured) or fallback to local file.
     Priority: HUGGINGFACE_MODEL_ID > CROPSENSE_MODEL_PATH > default local path
     """
-    global model
+    global model, MODEL_LOAD_ERROR
     model = None
+    MODEL_LOAD_ERROR = None
+
+    if not _tf_enabled():
+        MODEL_LOAD_ERROR = "TensorFlow disabled (set CROPSENSE_ENABLE_TF=1 to enable)."
+        return
+
+    # Local import so the API can boot even if TF crashes on import.
+    import tensorflow as tf
     
     # Option 1: Try loading from Hugging Face
     hf_model_id = os.environ.get("HUGGINGFACE_MODEL_ID")
@@ -379,6 +394,7 @@ def load_model():
             print(f"✓ Model loaded successfully from Hugging Face: {hf_model_id}")
             return
         except Exception as e:
+            MODEL_LOAD_ERROR = f"Error loading model from Hugging Face: {e}"
             print(f"✗ Error loading model from Hugging Face: {e}")
             print("   Falling back to local model...")
     
@@ -396,9 +412,11 @@ def load_model():
         else:
             print(f"✗ Model file not found: {model_path}")
             model = None
+            MODEL_LOAD_ERROR = f"Model file not found: {model_path}"
     except Exception as e:
         print(f"✗ Error loading local model: {e}")
         model = None
+        MODEL_LOAD_ERROR = f"Error loading local model: {e}"
 
 def load_label_encoder():
     """
@@ -456,8 +474,21 @@ def load_label_encoder():
         CLASS_NAMES = []
 
 # Load model and encoder on startup
-load_model()
-load_label_encoder()
+@app.on_event("startup")
+def _startup_load_assets():
+    # Don't block server startup on ML assets; prediction endpoint already
+    # returns a graceful fallback when model/classes are missing.
+    try:
+        load_model()
+    except Exception as e:
+        # Note: this can't catch segfaults, but it will catch normal Python errors.
+        global MODEL_LOAD_ERROR
+        MODEL_LOAD_ERROR = f"Unexpected error loading model: {e}"
+        print(f"✗ Unexpected error loading model: {e}")
+    try:
+        load_label_encoder()
+    except Exception as e:
+        print(f"✗ Unexpected error loading label encoder: {e}")
 
 # Initialize services
 weather_service = WeatherService()
@@ -473,6 +504,8 @@ async def root():
         "version": "1.0.0",
         "model_loaded": model is not None,
         "encoder_loaded": label_encoder is not None,
+        "tf_enabled": _tf_enabled(),
+        "model_load_error": MODEL_LOAD_ERROR,
         "auth": "enabled",
     }
 
@@ -483,6 +516,8 @@ async def health():
         "status": "healthy",
         "model": "loaded" if model is not None else "not loaded",
         "label_encoder": "loaded" if label_encoder is not None else "not loaded",
+        "tf_enabled": _tf_enabled(),
+        "model_load_error": MODEL_LOAD_ERROR,
         "weather_service": "available",
         "advisor_service": "available",
         "crop_planner_rows": len(crop_planner._rows),
