@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../utils/colors.dart';
 import '../data/rwanda_locations.dart';
+import '../utils/colors.dart';
+import '../services/auth_service.dart';
+import '../services/local_profile_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? profile;
@@ -14,7 +15,8 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
+  final _profileService = LocalProfileService();
+  final _auth = AuthService();
   bool _isLoading = false;
 
   late TextEditingController _fullNameController;
@@ -56,7 +58,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _authService.updateProfile(
+      await _profileService.updateProfile(
         fullName: _fullNameController.text.trim(),
         phone: _phoneController.text.trim(),
         location: _locationController.text.trim(),
@@ -65,6 +67,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         landSize: double.tryParse(_landSizeController.text),
         soilType: _soilTypeController.text.trim(),
       );
+
+      // Best-effort sync to backend (only if logged in). UI still works offline.
+      await _auth.updateProfile({
+        'full_name': _fullNameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'location': _locationController.text.trim(),
+        'district': _selectedDistrict,
+        'province': _selectedProvince,
+        'land_size': double.tryParse(_landSizeController.text),
+        'soil_type': _soilTypeController.text.trim(),
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

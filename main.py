@@ -1,6 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import tensorflow as tf
 from PIL import Image
 import numpy as np
@@ -8,6 +9,9 @@ import io
 import pickle
 import os
 import json
+import sqlite3
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from services import WeatherService, RwandaAgronomistAdvisor, RwandaCropPlanner
 
@@ -34,6 +38,187 @@ app.add_middleware(
 model = None
 label_encoder = None  # Optional: from sklearn
 CLASS_NAMES: list[str] = []  # Fallback: from model_metadata.json
+
+#
+# --- Simple Auth (SQLite + JWT) ---
+# This replaces Supabase for login/register/profile.
+#
+security = HTTPBearer(auto_error=False)
+
+DB_PATH = os.environ.get("CROPSENSE_DB_PATH", "cropsense.db")
+JWT_SECRET = os.environ.get("CROPSENSE_JWT_SECRET", "CHANGE_ME_IN_PRODUCTION")
+JWT_ALG = "HS256"
+JWT_EXPIRES_HOURS = int(os.environ.get("CROPSENSE_JWT_EXPIRES_HOURS", "168"))  # 7 days
+
+def _db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def _init_db() -> None:
+    conn = _db()
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              email TEXT UNIQUE NOT NULL,
+              password_hash TEXT NOT NULL,
+              full_name TEXT NOT NULL,
+              phone TEXT DEFAULT '',
+              province TEXT DEFAULT '',
+              district TEXT DEFAULT '',
+              sector TEXT DEFAULT '',
+              cell TEXT DEFAULT '',
+              village TEXT DEFAULT '',
+              land_size REAL,
+              soil_type TEXT DEFAULT '',
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            );
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+_init_db()
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+def _require_packages():
+    # Lazy import so server can start even if optional ML deps differ.
+    from passlib.context import CryptContext
+    from jose import jwt
+    return CryptContext(schemes=["bcrypt"], deprecated="auto"), jwt
+
+def _hash_password(password: str) -> str:
+    pwd_context, _ = _require_packages()
+    return pwd_context.hash(password)
+
+def _verify_password(password: str, password_hash: str) -> bool:
+    pwd_context, _ = _require_packages()
+    return pwd_context.verify(password, password_hash)
+
+def _create_token(user_id: int, email: str) -> str:
+    _, jwt = _require_packages()
+    exp = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRES_HOURS)
+    payload = {"sub": str(user_id), "email": email, "exp": exp}
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+def _decode_token(token: str) -> dict:
+    _, jwt = _require_packages()
+    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+
+def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> sqlite3.Row:
+    if creds is None or not creds.credentials:
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    try:
+        payload = _decode_token(creds.credentials)
+        user_id = int(payload.get("sub"))
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    conn = _db()
+    try:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        return row
+    finally:
+        conn.close()
+
+@app.post("/auth/register")
+async def auth_register(payload: dict):
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+    full_name = (payload.get("full_name") or "").strip()
+    phone = (payload.get("phone") or "").strip()
+    province = (payload.get("province") or "").strip()
+    district = (payload.get("district") or "").strip()
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if not full_name:
+        raise HTTPException(status_code=400, detail="Full name is required")
+
+    conn = _db()
+    try:
+        password_hash = _hash_password(password)
+        now = _now_iso()
+        conn.execute(
+            """
+            INSERT INTO users (email, password_hash, full_name, phone, province, district, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (email, password_hash, full_name, phone, province, district, now, now),
+        )
+        conn.commit()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        token = _create_token(user["id"], user["email"])
+        return {"access_token": token, "token_type": "bearer", "profile": dict(user)}
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    finally:
+        conn.close()
+
+@app.post("/auth/login")
+async def auth_login(payload: dict):
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+
+    conn = _db()
+    try:
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if user is None or not _verify_password(password, user["password_hash"]):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        token = _create_token(user["id"], user["email"])
+        return {"access_token": token, "token_type": "bearer", "profile": dict(user)}
+    finally:
+        conn.close()
+
+@app.get("/auth/me")
+async def auth_me(user: sqlite3.Row = Depends(get_current_user)):
+    u = dict(user)
+    u.pop("password_hash", None)
+    return {"profile": u}
+
+@app.put("/auth/profile")
+async def auth_update_profile(payload: dict, user: sqlite3.Row = Depends(get_current_user)):
+    fields = {
+        "full_name": payload.get("full_name"),
+        "phone": payload.get("phone"),
+        "province": payload.get("province"),
+        "district": payload.get("district"),
+        "sector": payload.get("sector"),
+        "cell": payload.get("cell"),
+        "village": payload.get("village"),
+        "land_size": payload.get("land_size"),
+        "soil_type": payload.get("soil_type"),
+    }
+    updates = {k: v for k, v in fields.items() if v is not None}
+    if not updates:
+        return {"profile": {k: user[k] for k in user.keys() if k != "password_hash"}}
+
+    updates["updated_at"] = _now_iso()
+    sets = ", ".join([f"{k} = ?" for k in updates.keys()])
+    values = list(updates.values()) + [user["id"]]
+
+    conn = _db()
+    try:
+        conn.execute(f"UPDATE users SET {sets} WHERE id = ?", values)
+        conn.commit()
+        new_user = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+        u = dict(new_user)
+        u.pop("password_hash", None)
+        return {"profile": u}
+    finally:
+        conn.close()
 
 def load_model():
     """
@@ -158,7 +343,8 @@ async def root():
         "status": "CropSense AI API is running",
         "version": "1.0.0",
         "model_loaded": model is not None,
-        "encoder_loaded": label_encoder is not None
+        "encoder_loaded": label_encoder is not None,
+        "auth": "enabled",
     }
 
 @app.get("/health")

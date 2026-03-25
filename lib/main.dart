@@ -5,13 +5,11 @@ import 'screens/process_screen.dart';
 import 'screens/season_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart';
-import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
 import 'utils/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SupabaseService.initialize();
   runApp(const CropSenseApp());
 }
 
@@ -31,44 +29,47 @@ class CropSenseApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(),
         useMaterial3: true,
       ),
+      routes: {
+        '/': (_) => const AuthWrapper(),
+      },
       home: const AuthWrapper(),
     );
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
-  // Controls whether to skip Supabase auth (for local testing only).
-  static const bool _skipAuthForTesting = false;
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  final _auth = AuthService();
+  bool _loading = true;
+  bool _authed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final ok = await _auth.isAuthenticated();
+    if (!mounted) return;
+    setState(() {
+      _authed = ok;
+      _loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Skip login - go straight to app for testing Crop Health, Advisor, etc.
-    if (_skipAuthForTesting) {
-      return const MainNavigator();
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
-    final authService = AuthService();
-
-    return StreamBuilder(
-      stream: authService.authStateChanges,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        if (authService.isAuthenticated) {
-          return const MainNavigator();
-        }
-
-        return const LoginScreen();
-      },
-    );
+    return _authed ? const MainNavigator() : const LoginScreen();
   }
 }
 

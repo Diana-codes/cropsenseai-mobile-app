@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
 import '../utils/colors.dart';
+import '../services/auth_service.dart';
 import '../data/rwanda_locations.dart';
+import '../main.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,64 +12,58 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _authService = AuthService();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
+  final _auth = AuthService();
+  final _fullName = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _password = TextEditingController();
+  bool _loading = false;
 
   String? _selectedProvince;
   String? _selectedDistrict;
 
   @override
   void dispose() {
-    _fullNameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _phoneController.dispose();
+    _fullName.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+  List<String> get _provinces => RwandaLocations.data.keys.toList()..sort();
+  List<String> get _districts {
+    if (_selectedProvince == null) return [];
+    final province = RwandaLocations.data[_selectedProvince!];
+    final districtsDynamic = (province?['districts'] as Map?)?.keys.toList() ?? <String>[];
+    final districts = districtsDynamic.map((e) => e.toString()).toList();
+    districts.sort();
+    return districts;
+  }
 
-    setState(() => _isLoading = true);
-
+  Future<void> _submit() async {
+    setState(() => _loading = true);
     try {
-      await _authService.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        fullName: _fullNameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        district: _selectedDistrict,
+      await _auth.register(
+        email: _email.text.trim(),
+        password: _password.text,
+        fullName: _fullName.text.trim(),
+        phone: _phone.text.trim(),
         province: _selectedProvince,
+        district: _selectedDistrict,
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Please login.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      }
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavigator()),
+        (_) => false,
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Registration failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration failed: ${e.toString()}')),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -79,195 +74,104 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: Text('Create Account', style: TextStyle(color: AppColors.textPrimary)),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+          child: Column(
+            children: [
+              TextField(
+                controller: _fullName,
+                decoration: const InputDecoration(
+                  labelText: 'Full Name',
+                  prefixIcon: Icon(Icons.person_outline),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Join CropSense AI today',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondary,
-                  ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
                 ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  prefixIcon: Icon(Icons.phone_outlined),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedProvince,
+                items: _provinces
+                    .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                    .toList(),
+                onChanged: (v) {
+                  setState(() {
+                    _selectedProvince = v;
+                    _selectedDistrict = null;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Province',
+                  prefixIcon: Icon(Icons.location_city),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedDistrict,
+                items: _districts
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedDistrict = v),
+                decoration: const InputDecoration(
+                  labelText: 'District',
+                  prefixIcon: Icon(Icons.place_outlined),
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedProvince,
-                  decoration: InputDecoration(
-                    labelText: 'Province',
-                    prefixIcon: const Icon(Icons.location_city),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: RwandaLocations.getProvinces().map((province) {
-                    return DropdownMenuItem(
-                      value: province,
-                      child: Text(province),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedProvince = value;
-                      _selectedDistrict = null;
-                    });
-                  },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _password,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock_outline),
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedDistrict,
-                  decoration: InputDecoration(
-                    labelText: 'District',
-                    prefixIcon: const Icon(Icons.place_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: _selectedProvince != null
-                      ? RwandaLocations.getDistricts(_selectedProvince!)
-                          .map((district) {
-                          return DropdownMenuItem(
-                            value: district,
-                            child: Text(district),
-                          );
-                        }).toList()
-                      : [],
-                  onChanged: _selectedProvince != null
-                      ? (value) {
-                          setState(() => _selectedDistrict = value);
-                        }
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleRegister,
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: _isLoading
+                  child: _loading
                       ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text(
-                          'Register',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      : const Text('Register'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+

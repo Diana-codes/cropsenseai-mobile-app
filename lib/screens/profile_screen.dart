@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
-import '../services/auth_service.dart';
 import '../services/app_settings.dart';
+import '../services/local_profile_service.dart';
+import '../services/auth_service.dart';
 import 'edit_profile_screen.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,7 +14,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _authService = AuthService();
+  final _profileService = LocalProfileService();
+  final _auth = AuthService();
   Map<String, dynamic>? _profile;
   bool _isLoading = true;
 
@@ -23,35 +26,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await _authService.getUserProfile();
+    final profile = await _profileService.getProfile();
     setState(() {
       _profile = profile;
       _isLoading = false;
     });
-  }
-
-  Future<void> _handleLogout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await _authService.signOut();
-    }
   }
 
   @override
@@ -64,8 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    final userName = _profile?['full_name'] ?? 'User';
-    final userEmail = _authService.currentUser?.email ?? '';
+    final userName = _profile?['full_name'] ?? 'Guest';
     final phone = _profile?['phone'] ?? '';
     final district = _profile?['district'] ?? '';
     final province = _profile?['province'] ?? '';
@@ -144,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildProfileItem(Icons.phone, phone),
                       const SizedBox(height: 12),
                     ],
-                    _buildProfileItem(Icons.email, userEmail),
+                    _buildProfileItem(Icons.info_outline, 'Account stored in FastAPI'),
                     const SizedBox(height: 12),
                     if (district.isNotEmpty && province.isNotEmpty)
                       _buildProfileItem(
@@ -208,7 +186,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: TextButton.icon(
-                  onPressed: _handleLogout,
+                  onPressed: () async {
+                    await _auth.signOut();
+                    if (!mounted) return;
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (_) => false,
+                    );
+                  },
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.danger,
                     padding: const EdgeInsets.symmetric(vertical: 14),

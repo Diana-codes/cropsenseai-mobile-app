@@ -7,9 +7,9 @@ import 'ai_advisor_screen_enhanced.dart';
 import 'crop_health_scanner_screen.dart';
 import 'season_planning_screen.dart';
 import 'process_screen.dart';
-import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../services/app_settings.dart';
+import '../services/local_profile_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _showAllRecommendations = false;
-  final _authService = AuthService();
+  final _profileService = LocalProfileService();
   Map<String, dynamic>? _profile;
   bool _isLoadingProfile = true;
   Map<String, dynamic>? _weather;
@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await _authService.getUserProfile();
+    final profile = await _profileService.getProfile();
     setState(() {
       _profile = profile;
       _isLoadingProfile = false;
