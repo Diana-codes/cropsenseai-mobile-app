@@ -7,6 +7,7 @@ class AlertCard extends StatelessWidget {
   final String subtitle;
   final String actionText;
   final Color color;
+  final VoidCallback? onTap;
 
   const AlertCard({
     super.key,
@@ -15,6 +16,7 @@ class AlertCard extends StatelessWidget {
     required this.subtitle,
     required this.actionText,
     required this.color,
+    this.onTap,
   });
 
   @override
@@ -62,18 +64,21 @@ class AlertCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              actionText,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                actionText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),

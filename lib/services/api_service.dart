@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Shared API service for CropSense backend.
 const String _apiBaseUrl =
@@ -237,6 +238,70 @@ class ApiService {
       return null;
     }
   }
+
+  // ── Advisor cache ─────────────────────────────────────────────────────────
+
+  static const _advisorCacheKey = 'cropsense_advisor_cache_v1';
+  static const _advisorCacheTtlMinutes = 360; // 6 hours
+
+  static Future<Map<String, dynamic>?> getCachedAdvisor() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_advisorCacheKey);
+      if (raw == null) return null;
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final savedAt = DateTime.tryParse(decoded['_savedAt'] as String? ?? '');
+      if (savedAt == null) return null;
+      final age = DateTime.now().difference(savedAt).inMinutes;
+      if (age > _advisorCacheTtlMinutes) return null;
+      return Map<String, dynamic>.from(decoded)..remove('_savedAt');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> saveAdvisorCache(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final toSave = Map<String, dynamic>.from(data)
+        ..['_savedAt'] = DateTime.now().toIso8601String();
+      await prefs.setString(_advisorCacheKey, jsonEncode(toSave));
+    } catch (_) {}
+  }
+
+  // ── Weather cache ──────────────────────────────────────────────────────────
+
+  static const _weatherCacheKey = 'cropsense_weather_cache_v1';
+  static const _weatherCacheTtlMinutes = 120; // 2 hours
+
+  /// Returns the last cached weather if still fresh, otherwise null.
+  static Future<Map<String, dynamic>?> getCachedWeather() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_weatherCacheKey);
+      if (raw == null) return null;
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final savedAt = DateTime.tryParse(decoded['_savedAt'] as String? ?? '');
+      if (savedAt == null) return null;
+      final age = DateTime.now().difference(savedAt).inMinutes;
+      if (age > _weatherCacheTtlMinutes) return null;
+      return Map<String, dynamic>.from(decoded)..remove('_savedAt');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Persists weather data to local cache with a timestamp.
+  static Future<void> saveWeatherCache(Map<String, dynamic> weather) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final toSave = Map<String, dynamic>.from(weather)
+        ..['_savedAt'] = DateTime.now().toIso8601String();
+      await prefs.setString(_weatherCacheKey, jsonEncode(toSave));
+    } catch (_) {}
+  }
+
+  // ── Season plan helpers ────────────────────────────────────────────────────
 
   /// Update one or more stages (e.g. `{key, done}`). Returns updated plan.
   static Future<Map<String, dynamic>?> updateSeasonPlanStages({

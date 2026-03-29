@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../utils/colors.dart';
 import '../services/api_service.dart';
+import 'ai_advisor_screen_enhanced.dart';
 
 // Default to localhost (works for Flutter web and when running on the same machine
 // as the backend). For Android emulator, override with:
@@ -109,7 +110,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
     } catch (e) {
       setState(() {
         _errorMessage =
-            'Failed to analyze image. Please make sure the backend is running and try again.\n$e';
+            'Could not analyze image. Please check your internet connection and try again.';
       });
     } finally {
       setState(() {
@@ -287,6 +288,11 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                   if (_isLoading) ...[
                     const SizedBox(height: 16),
                     const CircularProgressIndicator(),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Analyzing your crop...',
+                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                    ),
                   ],
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 16),
@@ -388,7 +394,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'AI Feature\nAutomatic disease detection and treatment recommendations are powered by the CropSense AI backend.',
+                      'AI Feature\nAutomatic disease detection and treatment recommendations are powered by CropSense AI.',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textPrimary,
@@ -399,16 +405,27 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Center(
-              child: TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'Next Steps',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AIAdvisorScreenEnhanced(),
                   ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.lightbulb_outline),
+                label: const Text(
+                  'Get crop advice',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

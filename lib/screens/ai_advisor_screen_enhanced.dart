@@ -48,7 +48,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
         _errorMessage = null;
       } else {
         _errorMessage =
-            'Failed to fetch recommendations. Ensure the backend is running and try again.';
+            'Could not load recommendations. Please check your internet connection and try again.';
         _showRecommendations = false;
       }
     });
@@ -202,7 +202,12 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     }),
                   ],
                   const SizedBox(height: 16),
-                  _buildDropdown('Season planning season', _season, ['Season A (Sept - Jan)', 'Season B (Feb - June)'], (value) {
+                  _buildDropdown('Season', _season, [
+                    'Long rainy season (Feb - May)',
+                    'Short rainy season (Sep - Dec)',
+                    'Dry season (Jun - Aug)',
+                    'Dry season (Dec - Jan)',
+                  ], (value) {
                     setState(() {
                       _season = value!;
                     });

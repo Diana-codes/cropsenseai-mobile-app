@@ -9,6 +9,7 @@ import pickle
 import os
 import json
 import sqlite3
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -72,6 +73,47 @@ def _db() -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     return conn
 
+def _send_reset_email(email: str, token: str) -> None:
+    """Send password reset email if SMTP is configured, otherwise log the token."""
+    import smtplib
+    from email.mime.text import MIMEText
+
+    smtp_host = os.environ.get("SMTP_HOST", "")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_pass = os.environ.get("SMTP_PASS", "")
+    from_email = os.environ.get("SMTP_FROM", smtp_user)
+    app_url = os.environ.get("APP_URL", "https://cropsenseai-mobile-app.onrender.com")
+
+    reset_url = f"{app_url}/reset-password?token={token}"
+    body = (
+        f"Hello,\n\n"
+        f"You requested a password reset for your CropSense AI account.\n\n"
+        f"Click the link below to reset your password (valid for 1 hour):\n"
+        f"{reset_url}\n\n"
+        f"If you did not request this, ignore this email.\n\n"
+        f"— CropSense AI Team"
+    )
+
+    if not smtp_host or not smtp_user:
+        # SMTP not configured — log token for development
+        print(f"[DEV] Password reset token for {email}: {token}")
+        print(f"[DEV] Reset URL: {reset_url}")
+        return
+
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = "Reset your CropSense AI password"
+        msg["From"] = from_email
+        msg["To"] = email
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_email, [email], msg.as_string())
+    except Exception as e:
+        print(f"[WARN] Failed to send reset email to {email}: {e}")
+
+
 def _init_db() -> None:
     if _is_postgres():
         conn = _pg_connect()
@@ -116,6 +158,18 @@ def _init_db() -> None:
                   is_active BOOLEAN NOT NULL DEFAULT TRUE,
                   created_at TIMESTAMPTZ NOT NULL,
                   updated_at TIMESTAMPTZ NOT NULL
+                );
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS password_resets (
+                  id SERIAL PRIMARY KEY,
+                  email TEXT NOT NULL,
+                  token TEXT UNIQUE NOT NULL,
+                  expires_at TIMESTAMPTZ NOT NULL,
+                  used BOOLEAN NOT NULL DEFAULT FALSE,
+                  created_at TIMESTAMPTZ NOT NULL
                 );
                 """
             )
@@ -166,6 +220,18 @@ def _init_db() -> None:
               is_active INTEGER NOT NULL DEFAULT 1,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL
+            );
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS password_resets (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              email TEXT NOT NULL,
+              token TEXT UNIQUE NOT NULL,
+              expires_at TEXT NOT NULL,
+              used INTEGER NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL
             );
             """
         )
@@ -1150,6 +1216,119 @@ async def ai_advisor(payload: dict):
         "best_match": to_dict(best),
         "alternatives": [to_dict(r) for r in alts],
     }
+
+@app.post("/auth/forgot-password")
+async def auth_forgot_password(payload: dict):
+    """Request a password reset. Always returns success to prevent email enumeration."""
+    email = (payload.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+
+    # Store reset token regardless of whether email exists (security best practice)
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            # Only create token if email exists
+            cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cur.fetchone():
+                cur.execute(
+                    """
+                    INSERT INTO password_resets (email, token, expires_at, used, created_at)
+                    VALUES (%s, %s, %s, FALSE, %s)
+                    """,
+                    (email, token, expires_at, datetime.now(timezone.utc)),
+                )
+                conn.commit()
+                # Attempt email delivery if SMTP configured
+                _send_reset_email(email, token)
+            else:
+                pass  # Do not reveal whether email exists
+        finally:
+            conn.close()
+    else:
+        conn = _db()
+        try:
+            user = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+            if user:
+                conn.execute(
+                    """
+                    INSERT INTO password_resets (email, token, expires_at, used, created_at)
+                    VALUES (?, ?, ?, 0, ?)
+                    """,
+                    (email, token, expires_at.isoformat(), _now_iso()),
+                )
+                conn.commit()
+                _send_reset_email(email, token)
+        finally:
+            conn.close()
+
+    return {"message": "If this email is registered, you will receive reset instructions shortly."}
+
+
+@app.post("/auth/reset-password")
+async def auth_reset_password(payload: dict):
+    """Reset password using a valid token."""
+    token = (payload.get("token") or "").strip()
+    new_password = payload.get("new_password") or ""
+
+    if not token:
+        raise HTTPException(status_code=400, detail="Reset token is required")
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    password_hash = _hash_password(new_password)
+    now = datetime.now(timezone.utc)
+
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT email, expires_at, used FROM password_resets WHERE token = %s",
+                (token,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+            email, expires_at, used = row[0], row[1], row[2]
+            if used:
+                raise HTTPException(status_code=400, detail="Reset token has already been used")
+            if now > expires_at:
+                raise HTTPException(status_code=400, detail="Reset token has expired")
+            cur.execute("UPDATE users SET password_hash = %s, updated_at = %s WHERE email = %s",
+                        (password_hash, now, email))
+            cur.execute("UPDATE password_resets SET used = TRUE WHERE token = %s", (token,))
+            conn.commit()
+        finally:
+            conn.close()
+    else:
+        conn = _db()
+        try:
+            row = conn.execute(
+                "SELECT email, expires_at, used FROM password_resets WHERE token = ?", (token,)
+            ).fetchone()
+            if not row:
+                raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+            email, expires_at_str, used = row["email"], row["expires_at"], row["used"]
+            if used:
+                raise HTTPException(status_code=400, detail="Reset token has already been used")
+            expires_dt = datetime.fromisoformat(expires_at_str)
+            if now.replace(tzinfo=None) > expires_dt.replace(tzinfo=None):
+                raise HTTPException(status_code=400, detail="Reset token has expired")
+            now_iso = _now_iso()
+            conn.execute("UPDATE users SET password_hash = ?, updated_at = ? WHERE email = ?",
+                         (password_hash, now_iso, email))
+            conn.execute("UPDATE password_resets SET used = 1 WHERE token = ?", (token,))
+            conn.commit()
+        finally:
+            conn.close()
+
+    return {"message": "Password reset successfully. You can now log in with your new password."}
+
 
 # --- Error Handling ---
 @app.exception_handler(HTTPException)

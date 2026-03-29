@@ -6,10 +6,12 @@ import 'screens/season_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
+import 'services/app_settings.dart';
 import 'utils/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppSettings.init();
   runApp(const CropSenseApp());
 }
 
@@ -29,9 +31,6 @@ class CropSenseApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(),
         useMaterial3: true,
       ),
-      routes: {
-        '/': (_) => const AuthWrapper(),
-      },
       home: const AuthWrapper(),
     );
   }
@@ -83,8 +82,8 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
+  late final List<Widget> _screens = [
+    HomeScreen(onProfileTap: () => setState(() => _currentIndex = 3)),
     const ProcessScreen(),
     const SeasonScreen(),
     const ProfileScreen(),

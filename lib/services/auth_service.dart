@@ -52,7 +52,7 @@ class AuthService {
             'district': district ?? '',
           }),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 60));
 
     if (res.statusCode < 200 || res.statusCode >= 300) {
       final msg = _extractError(res.body) ?? 'Registration failed';
@@ -88,7 +88,7 @@ class AuthService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'email': email, 'password': password}),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 60));
 
     if (res.statusCode < 200 || res.statusCode >= 300) {
       final msg = _extractError(res.body) ?? 'Login failed';
@@ -118,7 +118,7 @@ class AuthService {
     final uri = Uri.parse('${ApiService.baseUrl}/auth/me');
     final res = await http
         .get(uri, headers: {'Authorization': 'Bearer $token'})
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 60));
     if (res.statusCode != 200) return null;
     final data = jsonDecode(res.body) as Map<String, dynamic>;
     return (data['profile'] as Map?)?.cast<String, dynamic>();
@@ -137,7 +137,7 @@ class AuthService {
           },
           body: jsonEncode(updates),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 60));
     if (res.statusCode != 200) return null;
     final data = jsonDecode(res.body) as Map<String, dynamic>;
     final profile = (data['profile'] as Map?)?.cast<String, dynamic>();
@@ -153,6 +153,21 @@ class AuthService {
       );
     }
     return profile;
+  }
+
+  Future<void> forgotPassword(String email) async {
+    final uri = Uri.parse('${ApiService.baseUrl}/auth/forgot-password');
+    final res = await http
+        .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email.trim().toLowerCase()}),
+        )
+        .timeout(const Duration(seconds: 60));
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      final msg = _extractError(res.body) ?? 'Request failed';
+      throw Exception(msg);
+    }
   }
 
   String? _extractError(String body) {

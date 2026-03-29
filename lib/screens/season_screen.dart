@@ -35,38 +35,45 @@ class SeasonScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Rwanda does not have winter and summer. Instead, farmers plan around long and short rainy seasons and dry seasons.',
+                      'Rwanda\'s farming calendar is built around four seasons. Knowing your season helps you choose the right crop, prepare your land on time, and maximise your harvest.',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      '- Long rainy season: February – May\n'
-                      '- Short rainy season: September – December\n'
-                      '- Long dry season: June – August\n'
-                      '- Short dry season: December – January',
+                      '🌧  Long rainy season: February – May\n'
+                      '🌦  Short rainy season: September – December\n'
+                      '☀️  Long dry season: June – August\n'
+                      '🌤  Short dry season: December – January',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
+                        height: 1.8,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'We are currently in: ${_currentRwandaSeason()}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Use the AI Season Planning tool to choose your location and season. This page will later show dynamic progress for your own fields.',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, color: Colors.white, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Currently: ${_currentRwandaSeason()}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

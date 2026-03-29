@@ -122,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildProfileItem(Icons.phone, phone),
                       const SizedBox(height: 12),
                     ],
-                    _buildProfileItem(Icons.info_outline, 'Account stored in FastAPI'),
+                    _buildProfileItem(Icons.verified_user_outlined, 'Account verified'),
                     const SizedBox(height: 12),
                     if (district.isNotEmpty && province.isNotEmpty)
                       _buildProfileItem(
@@ -180,8 +180,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 'Notifications',
                 true,
               ),
-              _buildSettingItem(Icons.security_outlined, 'Security', false),
-              _buildSettingItem(Icons.help_outline, 'Help', false),
+              _buildSettingItem(Icons.security_outlined, 'Security', false,
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Account Security'),
+                      content: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Your account is protected with:'),
+                          SizedBox(height: 12),
+                          Text('🔒  Encrypted password storage'),
+                          SizedBox(height: 6),
+                          Text('🔑  Secure login tokens'),
+                          SizedBox(height: 6),
+                          Text('📵  Automatic session expiry'),
+                          SizedBox(height: 16),
+                          Text(
+                            'To change your password, log out and use the "Forgot password" option on the login screen.',
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Always log out on shared devices to keep your account safe.',
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Got it'),
+                        ),
+                      ],
+                    ),
+                  )),
+              _buildSettingItem(Icons.help_outline, 'Help', false,
+                  onTap: () => showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (_) => Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Help & Support',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 16),
+                          const Text('How to use CropSense AI',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '1. Set your location and land type in your profile.\n'
+                            '2. Use AI Advisor to get crop recommendations for your area.\n'
+                            '3. Save a season plan to track your progress in the Process tab.\n'
+                            '4. Use the Crop Scanner to detect diseases on your crops.',
+                            style: TextStyle(fontSize: 13, height: 1.6),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('Contact Support',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '📧  support@cropsenseai.rw\n'
+                            '🌐  www.cropsenseai.rw',
+                            style: TextStyle(fontSize: 13, height: 1.6),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Close'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -211,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               Center(
                 child: Text(
-                  'Version 1.0.0 • BUILD 20012025',
+                  'Version 1.0.0 • BUILD 29032025',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -243,8 +323,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingItem(IconData icon, String title, bool hasSwitch) {
-    return Container(
+  Widget _buildSettingItem(IconData icon, String title, bool hasSwitch, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -270,7 +352,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: AppSettings.notificationsEnabled,
               onChanged: (value) {
                 setState(() {
-                  AppSettings.notificationsEnabled = value;
+                  AppSettings.setNotifications(value);
                 });
               },
               activeColor: AppColors.primary,
@@ -278,6 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           else
             const Icon(Icons.chevron_right, color: AppColors.textSecondary),
         ],
+      ),
       ),
     );
   }

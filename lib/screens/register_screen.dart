@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../services/auth_service.dart';
@@ -20,12 +21,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
   bool _loading = false;
+  bool _serverWaking = false;
+  Timer? _wakeTimer;
 
   String? _selectedProvince;
   String? _selectedDistrict;
 
   @override
   void dispose() {
+    _wakeTimer?.cancel();
     _fullName.dispose();
     _email.dispose();
     _phone.dispose();
@@ -59,6 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     setState(() => _loading = true);
+    _wakeTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && _loading) setState(() => _serverWaking = true);
+    });
     try {
       await _auth.register(
         email: _email.text.trim(),
@@ -79,7 +86,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SnackBar(content: Text('Registration failed: ${e.toString()}')),
       );
     } finally {
-      if (mounted) setState(() => _loading = false);
+      _wakeTimer?.cancel();
+      if (mounted) setState(() { _loading = false; _serverWaking = false; });
     }
   }
 
@@ -162,6 +170,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 18),
+              if (_serverWaking) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber.shade700),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Connecting to server, please wait a moment...',
+                          style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
