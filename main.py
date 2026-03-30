@@ -965,6 +965,71 @@ async def health():
         "crop_planner_rows": len(crop_planner._rows),
     }
 
+@app.get("/admin/stats")
+async def admin_stats():
+    """Quick overview of database contents for demo/defense."""
+    if _is_postgres():
+        conn = _pg_connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM users")
+            user_count = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM season_plans")
+            plan_count = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM season_plans WHERE is_active = TRUE")
+            active_plans = cur.fetchone()[0]
+            cur.execute(
+                "SELECT id, email, full_name, province, district, created_at "
+                "FROM users ORDER BY id DESC LIMIT 10"
+            )
+            cols = [d[0] for d in cur.description]
+            recent_users = [dict(zip(cols, row)) for row in cur.fetchall()]
+            cur.execute(
+                "SELECT id, user_id, province, district, season, primary_crop, is_active, created_at "
+                "FROM season_plans ORDER BY id DESC LIMIT 10"
+            )
+            cols2 = [d[0] for d in cur.description]
+            recent_plans = [dict(zip(cols2, row)) for row in cur.fetchall()]
+            return {
+                "database": "PostgreSQL",
+                "total_users": user_count,
+                "total_season_plans": plan_count,
+                "active_plans": active_plans,
+                "recent_users": recent_users,
+                "recent_plans": recent_plans,
+            }
+        finally:
+            conn.close()
+    else:
+        conn = _db()
+        try:
+            user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+            plan_count = conn.execute("SELECT COUNT(*) FROM season_plans").fetchone()[0]
+            active_plans = conn.execute("SELECT COUNT(*) FROM season_plans WHERE is_active = 1").fetchone()[0]
+            recent_users = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, email, full_name, province, district, created_at "
+                    "FROM users ORDER BY id DESC LIMIT 10"
+                ).fetchall()
+            ]
+            recent_plans = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, user_id, province, district, season, primary_crop, is_active, created_at "
+                    "FROM season_plans ORDER BY id DESC LIMIT 10"
+                ).fetchall()
+            ]
+            return {
+                "database": "SQLite",
+                "total_users": user_count,
+                "total_season_plans": plan_count,
+                "active_plans": active_plans,
+                "recent_users": recent_users,
+                "recent_plans": recent_plans,
+            }
+        finally:
+            conn.close()
+
+
 # --- Prediction Endpoint ---
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
