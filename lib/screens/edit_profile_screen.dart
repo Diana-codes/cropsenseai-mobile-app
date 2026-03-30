@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/rwanda_locations.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 import '../services/auth_service.dart';
 import '../services/local_profile_service.dart';
@@ -55,6 +56,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _handleUpdate() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final t = AppLocalizations.of(context);
     setState(() => _isLoading = true);
 
     try {
@@ -81,8 +83,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
+          SnackBar(
+            content: Text(t.tr('profileUpdated')),
             backgroundColor: Colors.green,
           ),
         );
@@ -92,7 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Update failed: ${e.toString()}'),
+            content: Text('${t.tr('updateFailed')}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -106,6 +108,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -116,7 +119,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Edit Profile',
+          t.tr('editProfile'),
           style: TextStyle(color: AppColors.textPrimary),
         ),
       ),
@@ -131,7 +134,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 TextFormField(
                   controller: _fullNameController,
                   decoration: InputDecoration(
-                    labelText: 'Full Name',
+                    labelText: t.tr('fullName'),
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -139,7 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
+                      return t.tr('enterFullName');
                     }
                     return null;
                   },
@@ -149,7 +152,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number',
+                    labelText: t.tr('phoneNumber'),
                     prefixIcon: const Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -160,7 +163,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 DropdownButtonFormField<String>(
                   value: _selectedProvince,
                   decoration: InputDecoration(
-                    labelText: 'Province',
+                    labelText: t.tr('province'),
                     prefixIcon: const Icon(Icons.location_city),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -183,7 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 DropdownButtonFormField<String>(
                   value: _selectedDistrict,
                   decoration: InputDecoration(
-                    labelText: 'District',
+                    labelText: t.tr('district'),
                     prefixIcon: const Icon(Icons.place_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -208,7 +211,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 TextFormField(
                   controller: _locationController,
                   decoration: InputDecoration(
-                    labelText: 'Specific Location',
+                    labelText: t.tr('specificLocation'),
                     prefixIcon: const Icon(Icons.my_location),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -220,7 +223,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _landSizeController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Land Size (hectares)',
+                    labelText: t.tr('landSizeHectares'),
                     prefixIcon: const Icon(Icons.landscape_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -231,7 +234,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 TextFormField(
                   controller: _soilTypeController,
                   decoration: InputDecoration(
-                    labelText: 'Soil Type',
+                    labelText: t.tr('soilType'),
                     prefixIcon: const Icon(Icons.terrain),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -258,8 +261,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Update Profile',
+                      : Text(
+                          t.tr('updateProfile'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

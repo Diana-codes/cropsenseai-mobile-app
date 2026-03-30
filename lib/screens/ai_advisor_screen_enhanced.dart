@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../data/rwanda_locations.dart';
 import '../services/api_service.dart';
+import '../l10n/app_localizations.dart';
 
 class AIAdvisorScreenEnhanced extends StatefulWidget {
   const AIAdvisorScreenEnhanced({super.key});
@@ -47,8 +48,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
         _showRecommendations = true;
         _errorMessage = null;
       } else {
-        _errorMessage =
-            'Could not load recommendations. Please check your internet connection and try again.';
+        _errorMessage = 'couldNotLoadRec';
         _showRecommendations = false;
       }
     });
@@ -56,6 +56,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -65,9 +66,9 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
         ),
-        title: const Text(
-          'AI Crop Advisor',
-          style: TextStyle(
+        title: Text(
+          t.tr('aiCropAdvisor'),
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -104,22 +105,22 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'CropSense AI',
-                          style: TextStyle(
+                          t.tr('appName'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'Your personalized crop recommendation assistant based on your location, soil conditions, and historical data to recommend the best crops for you.',
-                          style: TextStyle(
+                          t.tr('personalizedAssistant'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                           ),
@@ -140,16 +141,16 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Tell us about your farm',
-                    style: TextStyle(
+                  Text(
+                    t.tr('tellAboutFarm'),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildDropdown('Province', _province, RwandaLocations.getProvinces(), (value) {
+                  _buildDropdown(t.tr('province'), _province, RwandaLocations.getProvinces(), (value) {
                     setState(() {
                       _province = value!;
                       _district = '';
@@ -160,7 +161,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                   }),
                   if (_province.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    _buildDropdown('District', _district, RwandaLocations.getDistricts(_province), (value) {
+                    _buildDropdown(t.tr('district'), _district, RwandaLocations.getDistricts(_province), (value) {
                       setState(() {
                         _district = value!;
                         _sector = '';
@@ -171,7 +172,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                   ],
                   if (_district.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    _buildDropdown('Sector', _sector, RwandaLocations.getSectors(_province, _district), (value) {
+                    _buildDropdown(t.tr('sector'), _sector, RwandaLocations.getSectors(_province, _district), (value) {
                       setState(() {
                         _sector = value!;
                         _cell = '';
@@ -184,7 +185,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     Builder(
                       builder: (context) {
                         final cells = RwandaLocations.getCells(_province, _district, _sector);
-                        return _buildDropdown('Cell (optional)', _cell, cells, (value) {
+                        return _buildDropdown(t.tr('cellOptional'), _cell, cells, (value) {
                           setState(() {
                             _cell = value!;
                             _village = '';
@@ -195,25 +196,30 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                   ],
                   if (_cell.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    _buildDropdown('Village (optional)', _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
+                    _buildDropdown(t.tr('villageOptional'), _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
                       setState(() {
                         _village = value!;
                       });
                     }),
                   ],
                   const SizedBox(height: 16),
-                  _buildDropdown('Season', _season, [
-                    'Long rainy season (Feb - May)',
-                    'Short rainy season (Sep - Dec)',
-                    'Dry season (Jun - Aug)',
-                    'Dry season (Dec - Jan)',
-                  ], (value) {
+                  _buildMappedDropdown(t.tr('season'), _season, {
+                    'Long rainy season (Feb - May)': t.tr('longRainyFebMay'),
+                    'Short rainy season (Sep - Dec)': t.tr('shortRainySepDec'),
+                    'Dry season (Jun - Aug)': t.tr('dryJunAug'),
+                    'Dry season (Dec - Jan)': t.tr('dryDecJan'),
+                  }, (value) {
                     setState(() {
                       _season = value!;
                     });
                   }),
                   const SizedBox(height: 16),
-                  _buildDropdown('Land type', _landType, ['Wetland', 'Hillside', 'Valley', 'Plateau'], (value) {
+                  _buildMappedDropdown(t.tr('landType'), _landType, {
+                    'Wetland': t.tr('wetland'),
+                    'Hillside': t.tr('hillside'),
+                    'Valley': t.tr('valley'),
+                    'Plateau': t.tr('plateau'),
+                  }, (value) {
                     setState(() {
                       _landType = value!;
                     });
@@ -238,9 +244,9 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text(
-                        'Get AI Cultivation Guide',
-                        style: TextStyle(
+                      child: Text(
+                        t.tr('getAiGuide'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -257,7 +263,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
               Text(
-                _errorMessage!,
+                t.tr(_errorMessage!),
                 style: const TextStyle(
                   color: AppColors.danger,
                   fontSize: 13,
@@ -274,16 +280,16 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'AI Recommendations',
-                style: TextStyle(
+              Text(
+                t.tr('aiRecommendations'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
-              _buildFeaturedRecommendation(_advisorData!['best_match'] as Map<String, dynamic>),
+              _buildFeaturedRecommendation(_advisorData!['best_match'] as Map<String, dynamic>, t),
               const SizedBox(height: 12),
               if (_advisorData!['alternatives'] is List)
                 ...(_advisorData!['alternatives'] as List)
@@ -291,7 +297,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                     .map(
                       (alt) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildAlternativeRecommendation(alt as Map<String, dynamic>),
+                        child: _buildAlternativeRecommendation(alt as Map<String, dynamic>, t),
                       ),
                     ),
             ],
@@ -349,7 +355,51 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
     );
   }
 
-  Widget _buildFeaturedRecommendation(Map<String, dynamic> best) {
+  Widget _buildMappedDropdown(String label, String value, Map<String, String> items, Function(String?) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value.isEmpty ? null : value,
+              hint: Text(
+                'Select your $label',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              isExpanded: true,
+              items: items.entries.map((entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedRecommendation(Map<String, dynamic> best, AppLocalizations t) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -365,7 +415,9 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             children: [
               Expanded(
                 child: Text(
-                  best['crop']?.toString() ?? 'Best crop',
+                  t.cropName(best['crop']?.toString() ?? '').isNotEmpty
+                      ? t.cropName(best['crop']?.toString() ?? '')
+                      : t.tr('bestCrop'),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -379,9 +431,9 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                   color: AppColors.success,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Best Match',
-                  style: TextStyle(
+                child: Text(
+                  t.tr('bestMatchLabel'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -403,8 +455,8 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             spacing: 16,
             runSpacing: 8,
             children: [
-              _buildDetailChip('🕐 Growing period: ${best['growingPeriod'] ?? 'N/A'}'),
-              _buildDetailChip('📍 Zone: ${best['agroZone'] ?? 'N/A'}'),
+              _buildDetailChip('🕐 ${t.tr('growingPeriod')}: ${best['growingPeriod'] ?? 'N/A'}'),
+              _buildDetailChip('📍 ${t.tr('agroZone')}: ${best['agroZone'] ?? 'N/A'}'),
             ],
           ),
         ],
@@ -412,7 +464,7 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
     );
   }
 
-  Widget _buildAlternativeRecommendation(Map<String, dynamic> alt) {
+  Widget _buildAlternativeRecommendation(Map<String, dynamic> alt, AppLocalizations t) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -427,7 +479,9 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             children: [
               Expanded(
                 child: Text(
-                  alt['crop']?.toString() ?? 'Alternative crop',
+                  t.cropName(alt['crop']?.toString() ?? '').isNotEmpty
+                      ? t.cropName(alt['crop']?.toString() ?? '')
+                      : t.tr('bestCrop'),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -441,9 +495,9 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
                   color: AppColors.info.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Alternative',
-                  style: TextStyle(
+                child: Text(
+                  t.tr('alternative'),
+                  style: const TextStyle(
                     color: AppColors.info,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -465,8 +519,8 @@ class _AIAdvisorScreenEnhancedState extends State<AIAdvisorScreenEnhanced> {
             spacing: 16,
             runSpacing: 8,
             children: [
-              _buildDetailChip('🕐 Growing period: ${alt['growingPeriod'] ?? 'N/A'}'),
-              _buildDetailChip('📍 Zone: ${alt['agroZone'] ?? 'N/A'}'),
+              _buildDetailChip('🕐 ${t.tr('growingPeriod')}: ${alt['growingPeriod'] ?? 'N/A'}'),
+              _buildDetailChip('📍 ${t.tr('agroZone')}: ${alt['agroZone'] ?? 'N/A'}'),
             ],
           ),
         ],

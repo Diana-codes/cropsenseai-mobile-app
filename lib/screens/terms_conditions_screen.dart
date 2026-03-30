@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 
 /// Simple consent screen used before allowing users to register.
@@ -19,6 +20,7 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -30,9 +32,9 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
           },
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
         ),
-        title: const Text(
-          'Terms & Conditions',
-          style: TextStyle(
+        title: Text(
+          t.tr('termsConditions'),
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
@@ -50,9 +52,9 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'Please read and accept before creating an account.',
-                  style: TextStyle(
+                child: Text(
+                  t.tr('readAndAccept'),
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -65,12 +67,12 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  '1) Consent: By using CropSense AI, you consent to the processing of your profile and location data to provide weather and crop guidance.\n\n'
-                  '2) Weather/Data: Advice and weather results are informational and may be inaccurate due to network or data provider issues.\n\n'
-                  '3) No guarantee: We do not guarantee outcomes. Please consult local agricultural experts for decisions.\n\n'
-                  '4) Disagreeing: If you do not agree, you will not be able to register.',
-                  style: TextStyle(fontSize: 13, height: 1.5),
+                child: Text(
+                  '${t.tr('termsClause1')}\n\n'
+                  '${t.tr('termsClause2')}\n\n'
+                  '${t.tr('termsClause3')}\n\n'
+                  '${t.tr('termsClause4')}',
+                  style: const TextStyle(fontSize: 13, height: 1.5),
                 ),
               ),
               const SizedBox(height: 16),
@@ -85,10 +87,10 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                             setState(() => _agreed = v ?? false);
                           },
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'I have read the Terms & Conditions and I agree to them.',
-                      style: TextStyle(fontSize: 13),
+                      t.tr('iAgreeTerms'),
+                      style: const TextStyle(fontSize: 13),
                     ),
                   ),
                 ],
@@ -102,9 +104,9 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                       : () {
                           if (!_agreed) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(
-                                  'Please check the box to accept the Terms & Conditions.',
+                                  t.tr('checkBoxTerms'),
                                 ),
                               ),
                             );
@@ -121,9 +123,9 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'I Agree',
-                    style: TextStyle(
+                  child: Text(
+                    t.tr('iAgree'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -147,9 +149,9 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Disagree',
-                    style: TextStyle(
+                  child: Text(
+                    t.tr('disagree'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

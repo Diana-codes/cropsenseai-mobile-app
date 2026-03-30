@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../services/auth_service.dart';
 import '../data/rwanda_locations.dart';
+import '../l10n/app_localizations.dart';
 import '../main.dart';
 import 'login_screen.dart';
 import 'terms_conditions_screen.dart';
@@ -82,8 +83,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final t = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: ${e.toString()}')),
+        SnackBar(content: Text('${t.tr('registrationFailed')}: ${e.toString()}')),
       );
     } finally {
       _wakeTimer?.cancel();
@@ -93,12 +95,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Create Account', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(t.tr('createAccount'), style: TextStyle(color: AppColors.textPrimary)),
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
@@ -108,27 +111,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               TextField(
                 controller: _fullName,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
+                decoration: InputDecoration(
+                  labelText: t.tr('fullName'),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: t.tr('email'),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _phone,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                decoration: InputDecoration(
+                  labelText: t.tr('phoneNumber'),
+                  prefixIcon: const Icon(Icons.phone_outlined),
                 ),
               ),
               const SizedBox(height: 12),
@@ -143,9 +146,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     _selectedDistrict = null;
                   });
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Province',
-                  prefixIcon: Icon(Icons.location_city),
+                decoration: InputDecoration(
+                  labelText: t.tr('province'),
+                  prefixIcon: const Icon(Icons.location_city),
                 ),
               ),
               const SizedBox(height: 12),
@@ -155,18 +158,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                     .toList(),
                 onChanged: (v) => setState(() => _selectedDistrict = v),
-                decoration: const InputDecoration(
-                  labelText: 'District',
-                  prefixIcon: Icon(Icons.place_outlined),
+                decoration: InputDecoration(
+                  labelText: t.tr('district'),
+                  prefixIcon: const Icon(Icons.place_outlined),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _password,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                decoration: InputDecoration(
+                  labelText: t.tr('password'),
+                  prefixIcon: const Icon(Icons.lock_outline),
                 ),
               ),
               const SizedBox(height: 18),
@@ -189,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Connecting to server, please wait a moment...',
+                          t.tr('connectingServer'),
                           style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
                         ),
                       ),
@@ -215,7 +218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Register'),
+                      : Text(t.tr('register')),
                 ),
               ),
             ],

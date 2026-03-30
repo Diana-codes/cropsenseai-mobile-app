@@ -15,6 +15,7 @@ import '../services/auth_service.dart';
 import '../services/local_profile_service.dart';
 import '../services/connectivity_service.dart';
 import '../utils/weather_numeric.dart';
+import '../l10n/app_localizations.dart';
 
 /// Returns the current Rwanda agricultural season based on the calendar month.
 String _currentRwandaSeason() {
@@ -23,6 +24,15 @@ String _currentRwandaSeason() {
   if (month >= 9 && month <= 12) return 'Short rainy season (Sep - Dec)';
   if (month >= 6 && month <= 8) return 'Dry season (Jun - Aug)';
   return 'Dry season (Dec - Jan)';
+}
+
+/// Localized version for UI display.
+String _currentRwandaSeasonLocalized(AppLocalizations t) {
+  final month = DateTime.now().month;
+  if (month >= 2 && month <= 5) return t.tr('longRainySeason');
+  if (month >= 9 && month <= 12) return t.tr('shortRainySeason');
+  if (month >= 6 && month <= 8) return t.tr('drySeason');
+  return t.tr('drySeason');
 }
 
 class HomeScreen extends StatefulWidget {
@@ -146,12 +156,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final userName = _profile?['full_name'] ?? 'User';
     final district = _profile?['district'] ?? '';
     final province = _profile?['province'] ?? '';
     final locationText = district.isNotEmpty && province.isNotEmpty
         ? '$district, $province'
-        : 'Location not set';
+        : t.tr('locationNotSet');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -177,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'You\'re offline. Showing last saved data.',
+                          t.tr('offlineMessage'),
                           style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                         ),
                       ),
@@ -208,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Connecting to server, please wait a moment...',
+                          t.tr('connectingServer'),
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.amber.shade900,
@@ -258,15 +269,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 location: district.isNotEmpty ? '$district, Rwanda' : 'Rwanda',
                 temperatureC: WeatherNumeric.parseIntRounded(_weather?['temperature']),
                 condition: _weather != null && _weather!['weather_code'] != null
-                    ? _weatherCondition(_weather!['weather_code'])
-                    : '☁️ Loading...',
+                    ? _weatherConditionLocalized(_weather!['weather_code'], t)
+                    : '☁️ ${t.tr('loading')}',
                 humidityPct: WeatherNumeric.parseIntRounded(_weather?['humidity']),
                 windSpeedKmh: WeatherNumeric.parseIntRounded(_weather?['wind_speed']),
                 forecast: null,
               ),
               const SizedBox(height: 24),
               Text(
-                'Quick Actions',
+                t.tr('quickActions'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -278,8 +289,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   QuickActionButton(
                     icon: Icons.add_circle_outline,
-                    label: 'New Season',
-                    subtitle: 'Start planning',
+                    label: t.tr('newSeason'),
+                    subtitle: t.tr('startPlanning'),
                     color: Colors.white,
                     iconColor: AppColors.primary,
                     onTap: () {
@@ -294,8 +305,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 12),
                   QuickActionButton(
                     icon: Icons.local_florist_outlined,
-                    label: 'Crop Health',
-                    subtitle: 'Scan crops',
+                    label: t.tr('cropHealth'),
+                    subtitle: t.tr('scanCrops'),
                     color: Colors.white,
                     iconColor: Colors.amber,
                     onTap: () {
@@ -314,8 +325,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   QuickActionButton(
                     icon: Icons.lightbulb_outline,
-                    label: 'Get Advice',
-                    subtitle: 'AI advisor',
+                    label: t.tr('getAdvice'),
+                    subtitle: t.tr('aiAdvisor'),
                     color: Colors.purple.shade50,
                     iconColor: AppColors.purple,
                     onTap: () {
@@ -330,8 +341,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 12),
                   QuickActionButton(
                     icon: Icons.wysiwyg_rounded,
-                    label: 'My Process',
-                    subtitle: 'View stages',
+                    label: t.tr('myProcess'),
+                    subtitle: t.tr('viewStages'),
                     color: Colors.blue.shade50,
                     iconColor: Colors.blue,
                     onTap: () {
@@ -367,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'My current plan (saved)',
+                        t.tr('myCurrentPlanSaved'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -376,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Crop: ${_activeSeasonPlan!['primary_crop']}',
+                        '${t.tr('crop')}: ${t.cropName(_activeSeasonPlan!['primary_crop']?.toString() ?? '')}',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textPrimary,
@@ -414,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'My current plan',
+                        t.tr('myCurrentPlan'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -423,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Crop: ${_advisorData!['best_match']['crop']}',
+                        '${t.tr('crop')}: ${t.cropName(_advisorData!['best_match']['crop']?.toString() ?? '')}',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textPrimary,
@@ -431,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Location: $locationText • Season: ${_currentRwandaSeason()}',
+                        'Location: $locationText • Season: ${_currentRwandaSeasonLocalized(t)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -452,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Alerts & Recommendations',
+                        t.tr('alertsRecommendations'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -460,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ..._buildAlerts(locationText),
+                      ..._buildAlerts(locationText, t),
                     ],
                   );
                 },
@@ -469,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recommended for',
+                    t.tr('recommendedFor'),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -483,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                     child: Text(
-                      _showAllRecommendations ? 'Show less' : 'See all',
+                      _showAllRecommendations ? t.tr('showLess') : t.tr('seeAll'),
                       style: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -494,14 +505,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'This season',
+                t.tr('thisSeason'),
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 16),
-              ..._buildRecommendationList().map(
+              ..._buildRecommendationList(t).map(
                 (rec) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: RecommendationCard(
@@ -530,7 +541,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return '🌤️ Variable';
   }
 
-  List<Widget> _buildAlerts(String locationText) {
+  String _weatherConditionLocalized(dynamic code, AppLocalizations t) {
+    if (code == null) return '☁️ —';
+    final c = code is num ? code.toInt() : 0;
+    if (c == 0) return '☀️ ${t.tr('clear')}';
+    if (c < 4) return '⛅ ${t.tr('partlyCloudy')}';
+    if (c < 50) return '☁️ ${t.tr('cloudy')}';
+    if (c < 70) return '🌧️ ${t.tr('rain')}';
+    return '🌤️ ${t.tr('variable')}';
+  }
+
+  List<Widget> _buildAlerts(String locationText, AppLocalizations t) {
     if (!AppSettings.notificationsEnabled) return [const SizedBox(height: 8)];
 
     final alerts = <Widget>[];
@@ -546,9 +567,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (sowingWindow.isNotEmpty && crop.isNotEmpty) {
       alerts.add(AlertCard(
         icon: Icons.agriculture,
-        title: 'Sowing window open',
-        subtitle: '$crop sowing period: $sowingWindow. Prepare your land now to be ready in time.',
-        actionText: 'View stages',
+        title: t.tr('sowingWindowOpen'),
+        subtitle: '${t.cropName(crop)} sowing period: $sowingWindow. ${t.tr('prepareLand')}',
+        actionText: t.tr('viewStages'),
         color: AppColors.primary,
         onTap: () => Navigator.push(
           context,
@@ -560,9 +581,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // ── Alert 2: Crop recommendation (no sowing window in plan) ──────────
       alerts.add(AlertCard(
         icon: Icons.lightbulb,
-        title: 'Recommended for $locationText',
-        subtitle: '$crop is the best match for your location and the current season.',
-        actionText: 'Get advice',
+        title: '${t.tr('recommendedFor')} $locationText',
+        subtitle: '${t.cropName(crop)} is the best match for your location and the current season.',
+        actionText: t.tr('getAdvice'),
         color: AppColors.primary,
         onTap: () => Navigator.push(
           context,
@@ -577,9 +598,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (humidity != null && humidity >= 75) {
       alerts.add(AlertCard(
         icon: Icons.water_drop,
-        title: 'High humidity warning',
-        subtitle: 'Humidity is at $humidity%. High risk of fungal disease. Inspect crops and apply preventive treatment.',
-        actionText: 'Scan crops',
+        title: t.tr('highHumidityWarning'),
+        subtitle: t.tr('humidityRisk'),
+        actionText: t.tr('scanCrops'),
         color: Colors.orange.shade700,
         onTap: () => Navigator.push(
           context,
@@ -593,9 +614,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_isFetchingData && _activeSeasonPlan == null && crop.isEmpty) {
       alerts.add(AlertCard(
         icon: Icons.calendar_today,
-        title: 'Plan your season',
-        subtitle: 'No active plan found. Get personalized crop recommendations for ${_currentRwandaSeason()}.',
-        actionText: 'Plan now',
+        title: t.tr('planYourSeason'),
+        subtitle: '${t.tr('noActivePlan')} ${_currentRwandaSeasonLocalized(t)}.',
+        actionText: t.tr('planNow'),
         color: AppColors.info,
         onTap: () => Navigator.push(
           context,
@@ -611,36 +632,37 @@ class _HomeScreenState extends State<HomeScreen> {
     return alerts;
   }
 
-  List<Map<String, dynamic>> _buildRecommendationList() {
+  List<Map<String, dynamic>> _buildRecommendationList(AppLocalizations t) {
     final list = <Map<String, dynamic>>[];
     if (_advisorData != null) {
       final best = _advisorData!['best_match'] as Map<String, dynamic>?;
       final alts = _advisorData!['alternatives'] as List? ?? [];
       if (best != null) {
-        list.add(_recFromApi(best, Icons.grass, 'Best match'));
+        list.add(_recFromApi(best, Icons.grass, 'Best match', t));
       }
       for (final a in alts.take(3)) {
-        list.add(_recFromApi(a as Map<String, dynamic>, Icons.grain, 'Alternative'));
+        list.add(_recFromApi(a as Map<String, dynamic>, Icons.grain, 'Alternative', t));
       }
     }
     if (list.isEmpty) {
       list.addAll([
         {
           'icon': Icons.lightbulb_outline,
-          'title': 'Get personalized recommendations',
-          'subtitle': 'Complete your profile and use AI Advisor for crop suggestions.',
+          'title': t.tr('getPersonalizedRec'),
+          'subtitle': t.tr('completeProfile'),
           'duration': '—',
-          'confidence': 'Tap Get Advice',
+          'confidence': t.tr('tapGetAdvice'),
         },
       ]);
     }
     return _showAllRecommendations ? list : list.take(2).toList();
   }
 
-  Map<String, dynamic> _recFromApi(Map<String, dynamic> r, IconData icon, String confidence) {
+  Map<String, dynamic> _recFromApi(Map<String, dynamic> r, IconData icon, String confidence, AppLocalizations t) {
+    final cropRaw = r['crop']?.toString() ?? '';
     return {
       'icon': icon,
-      'title': r['crop']?.toString() ?? 'Crop',
+      'title': cropRaw.isNotEmpty ? t.cropName(cropRaw) : t.tr('crop'),
       'subtitle': r['reason']?.toString() ?? '',
       'duration': r['growingPeriod']?.toString() ?? '—',
       'confidence': confidence,

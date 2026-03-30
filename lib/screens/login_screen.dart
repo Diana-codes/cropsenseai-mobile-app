@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../services/auth_service.dart';
+import '../l10n/app_localizations.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main.dart';
@@ -38,8 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final t = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${e.toString()}')),
+        SnackBar(content: Text('${t.tr('loginFailed')}: ${e.toString()}')),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -48,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -66,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Icon(Icons.agriculture, size: 64, color: AppColors.primary),
               const SizedBox(height: 12),
               Text(
-                'CropSense AI',
+                t.tr('appName'),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -77,18 +80,18 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: t.tr('email'),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _password,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                decoration: InputDecoration(
+                  labelText: t.tr('password'),
+                  prefixIcon: const Icon(Icons.lock_outline),
                 ),
               ),
               Align(
@@ -98,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     context,
                     MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                   ),
-                  child: const Text('Forgot password?'),
+                  child: Text(t.tr('forgotPassword')),
                 ),
               ),
               const SizedBox(height: 4),
@@ -120,21 +123,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Login'),
+                      : Text(t.tr('login')),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account? "),
+                  Text(t.tr('noAccount')),
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const RegisterScreen()),
                       );
                     },
-                    child: const Text('Register'),
+                    child: Text(t.tr('register')),
                   ),
                 ],
               )

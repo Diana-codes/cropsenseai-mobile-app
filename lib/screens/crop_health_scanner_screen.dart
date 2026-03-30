@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 import '../services/api_service.dart';
 import 'ai_advisor_screen_enhanced.dart';
@@ -121,6 +122,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -130,8 +132,8 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
         ),
-        title: const Text(
-          'Crop Health Scanner',
+        title: Text(
+          t.tr('cropHealthScanner'),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -169,9 +171,9 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Scan your crop\nUpload crop image',
+                      '${t.tr('scanYourCrop')}\n${t.tr('uploadCropImage')}',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -218,7 +220,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Upload a photo',
+                            t.tr('uploadAPhoto'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -248,8 +250,8 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text(
-                            'Take Photo',
+                          label: Text(
+                            t.tr('takePhoto'),
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -274,8 +276,8 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.photo_library),
-                          label: const Text(
-                            'Upload',
+                          label: Text(
+                            t.tr('upload'),
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -289,8 +291,8 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                     const SizedBox(height: 16),
                     const CircularProgressIndicator(),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Analyzing your crop...',
+                    Text(
+                      t.tr('analyzingCrop'),
                       style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                     ),
                   ],
@@ -310,7 +312,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
             const SizedBox(height: 24),
             if (_result != null) ...[
               Text(
-                'AI Results',
+                t.tr('aiResults'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -322,7 +324,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
               const SizedBox(height: 24),
             ],
             Text(
-              'How to Take Good Photos',
+              t.tr('howToTakePhotos'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -332,27 +334,27 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
             const SizedBox(height: 16),
             _buildTipCard(
               '1',
-              'Good Lighting',
-              'Take the photo in natural light, avoid dark or shaded areas for best results',
+              t.tr('goodLighting'),
+              t.tr('naturalLight'),
               AppColors.success,
             ),
             const SizedBox(height: 12),
             _buildTipCard(
               '2',
-              'Clear Focus',
-              'Ensure that the camera is steady and focus on the leaf clearly with sharp details',
+              t.tr('clearFocus'),
+              t.tr('steadyCamera'),
               AppColors.info,
             ),
             const SizedBox(height: 12),
             _buildTipCard(
               '3',
-              'Multiple Angles',
-              'Take 2-3 photos from different angles. AI analyzes from multiple perspectives',
+              t.tr('multipleAngles'),
+              t.tr('takeMultiplePhotos'),
               AppColors.purple,
             ),
             const SizedBox(height: 24),
             Text(
-              'Common Crop Diseases',
+              t.tr('commonDiseases'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -394,7 +396,7 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'AI Feature\nAutomatic disease detection and treatment recommendations are powered by CropSense AI.',
+                      '${t.tr('aiFeature')}\n${t.tr('aiPowered')}',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textPrimary,
@@ -423,8 +425,8 @@ class _CropHealthScannerScreenState extends State<CropHealthScannerScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.lightbulb_outline),
-                label: const Text(
-                  'Get crop advice',
+                label: Text(
+                  t.tr('getCropAdvice'),
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
               ),

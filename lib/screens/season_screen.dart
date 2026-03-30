@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 import 'season_planning_screen.dart';
 import 'ai_advisor_screen_enhanced.dart';
@@ -8,6 +9,7 @@ class SeasonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -17,7 +19,7 @@ class SeasonScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Rwanda Seasons',
+                t.tr('rwandaSeasons'),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -34,21 +36,21 @@ class SeasonScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Rwanda\'s farming calendar is built around four seasons. Knowing your season helps you choose the right crop, prepare your land on time, and maximise your harvest.',
-                      style: TextStyle(
+                    Text(
+                      t.tr('seasonDescription'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      '🌧  Long rainy season: February – May\n'
-                      '🌦  Short rainy season: September – December\n'
-                      '☀️  Long dry season: June – August\n'
-                      '🌤  Short dry season: December – January',
-                      style: TextStyle(
+                    Text(
+                      '🌧  ${t.tr('longRainySeason')}: February – May\n'
+                      '🌦  ${t.tr('shortRainySeason')}: September – December\n'
+                      '☀️  ${t.tr('longDrySeason')}: June – August\n'
+                      '🌤  ${t.tr('shortDrySeason')}: December – January',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         height: 1.8,
@@ -65,12 +67,14 @@ class SeasonScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.calendar_today, color: Colors.white, size: 16),
                           const SizedBox(width: 8),
-                          Text(
-                            'Currently: ${_currentRwandaSeason()}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: Text(
+                              '${t.tr('currently')}: ${_currentRwandaSeason(t)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -101,7 +105,7 @@ class SeasonScreen extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.map),
-                      label: const Text('Plan new season'),
+                      label: Text(t.tr('planNewSeason')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -124,7 +128,7 @@ class SeasonScreen extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.lightbulb_outline),
-                      label: const Text('Get AI advice'),
+                      label: Text(t.tr('getAiAdvice')),
                     ),
                   ),
                 ],
@@ -136,18 +140,18 @@ class SeasonScreen extends StatelessWidget {
     );
   }
 
-  String _currentRwandaSeason() {
+  String _currentRwandaSeason(AppLocalizations t) {
     final month = DateTime.now().month;
     if (month >= 2 && month <= 5) {
-      return 'Long rainy season (Feb – May)';
+      return '${t.tr('longRainySeason')} (Feb – May)';
     }
     if (month >= 9 && month <= 12) {
-      return 'Short rainy season (Sep – Dec)';
+      return '${t.tr('shortRainySeason')} (Sep – Dec)';
     }
     if (month >= 6 && month <= 8) {
-      return 'Long dry season (Jun – Aug)';
+      return '${t.tr('longDrySeason')} (Jun – Aug)';
     }
-    return 'Short dry season (Dec – Jan)';
+    return '${t.tr('shortDrySeason')} (Dec – Jan)';
   }
 
   Widget _buildTimeCard(String value, String label) {

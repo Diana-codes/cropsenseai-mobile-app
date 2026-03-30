@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/process_screen.dart';
@@ -7,6 +8,7 @@ import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'services/app_settings.dart';
+import 'l10n/app_localizations.dart';
 import 'utils/colors.dart';
 
 void main() async {
@@ -20,18 +22,37 @@ class CropSenseApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CropSense AI',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-        ),
-        textTheme: GoogleFonts.interTextTheme(),
-        useMaterial3: true,
-      ),
-      home: const AuthWrapper(),
+    return ValueListenableBuilder<Locale>(
+      valueListenable: AppSettings.localeNotifier,
+      builder: (context, locale, _) {
+        // Kinyarwanda (rw) is not in Flutter's built-in Material/Cupertino
+        // locales, so we always tell MaterialApp to use 'en' while our own
+        // AppLocalizations reads the real locale from AppSettings.
+        return MaterialApp(
+          title: 'CropSense AI',
+          debugShowCheckedModeBanner: false,
+          locale: const Locale('en'),
+          supportedLocales: const [Locale('en')],
+          localizationsDelegates: [
+            // Our delegate reads AppSettings.localeNotifier directly
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+            ),
+            textTheme: GoogleFonts.interTextTheme(),
+            useMaterial3: true,
+          ),
+          // key forces full rebuild when locale changes
+          key: ValueKey(locale.languageCode),
+          home: const AuthWrapper(),
+        );
+      },
     );
   }
 }
@@ -91,6 +112,7 @@ class _MainNavigatorState extends State<MainNavigator> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
@@ -110,10 +132,10 @@ class _MainNavigatorState extends State<MainNavigator> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(Icons.home_rounded, 'Home', 0),
-                _buildNavItem(Icons.wysiwyg_rounded, 'Process', 1),
-                _buildNavItem(Icons.calendar_today_rounded, 'Season', 2),
-                _buildNavItem(Icons.person_rounded, 'Account', 3),
+                _buildNavItem(Icons.home_rounded, t.tr('home'), 0),
+                _buildNavItem(Icons.wysiwyg_rounded, t.tr('process'), 1),
+                _buildNavItem(Icons.calendar_today_rounded, t.tr('season'), 2),
+                _buildNavItem(Icons.person_rounded, t.tr('account'), 3),
               ],
             ),
           ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../services/app_settings.dart';
+import '../l10n/app_localizations.dart';
 import 'season_planning_screen.dart';
 import 'login_screen.dart';
 
@@ -133,7 +135,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
         setState(() {
           _loading = false;
           _plan = null;
-          _message = 'Sign in to load your season process from your account.';
+          _message = 'signInProcess';
         });
       }
       return;
@@ -144,8 +146,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
       _loading = false;
       _plan = plan;
       if (plan == null) {
-        _message =
-            'No saved season plan yet. Use Season → Plan new season, then tap Done to save it to your account.';
+        _message = 'noSavedPlan';
       }
     });
   }
@@ -178,7 +179,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
         _plan = updated;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not update stage. Try again.')),
+          SnackBar(content: Text(AppLocalizations.of(context).tr('couldNotUpdateStage'))),
         );
       }
     });
@@ -186,6 +187,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -206,7 +208,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
                       ),
                     Expanded(
                       child: Text(
-                        'Season Process',
+                        t.tr('seasonProcess'),
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -225,13 +227,13 @@ class _ProcessScreenState extends State<ProcessScreen> {
                     ),
                   )
                 else if (_plan != null) ...[
-                  _buildPlanHeader(),
+                  _buildPlanHeader(t),
                   const SizedBox(height: 16),
-                  _buildSectionTitle('Your season stages'),
+                  _buildSectionTitle(t.tr('yourSeasonStages')),
                   const SizedBox(height: 12),
-                  ..._buildStageList(),
+                  ..._buildStageList(t),
                 ] else ...[
-                  _buildEmptyState(),
+                  _buildEmptyState(t),
                 ],
               ],
             ),
@@ -241,7 +243,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
     );
   }
 
-  Widget _buildPlanHeader() {
+  Widget _buildPlanHeader(AppLocalizations t) {
     final crop = _plan!['primary_crop']?.toString() ?? '';
     final loc =
         '${_plan!['district']?.toString() ?? ''}, ${_plan!['province']?.toString() ?? ''}'
@@ -286,7 +288,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      crop.isNotEmpty ? crop : 'Your crop plan',
+                      crop.isNotEmpty ? t.cropName(crop) : t.tr('yourSeasonStages'),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -310,7 +312,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
                   ),
                 ).then((_) => _load()),
                 child: Text(
-                  'New plan',
+                  t.tr('newPlan'),
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -331,7 +333,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
                 if (landType.isNotEmpty)
                   _buildChip(Icons.landscape_outlined, landType),
                 if (sowingWindow.isNotEmpty)
-                  _buildChip(Icons.calendar_month_outlined, 'Sow: $sowingWindow'),
+                  _buildChip(Icons.calendar_month_outlined, '${t.tr('sowingWindow')}: $sowingWindow'),
               ],
             ),
           ],
@@ -365,7 +367,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
     );
   }
 
-  List<Widget> _buildStageList() {
+  List<Widget> _buildStageList(AppLocalizations t) {
     final raw = _plan!['stages'];
     if (raw is! List) {
       return [
@@ -388,7 +390,13 @@ class _ProcessScreenState extends State<ProcessScreen> {
       if (item is! Map) continue;
       final m = Map<String, dynamic>.from(item);
       final key = m['key']?.toString() ?? '';
-      final title = m['title']?.toString() ?? key;
+      final titleKey = 'stage_$key';
+      final translatedTitle = t.tr(titleKey);
+      // Use translated title if available, otherwise fall back to server title
+      final title = translatedTitle != titleKey ? translatedTitle : (m['title']?.toString() ?? key);
+      final descKey = 'stage_${key}_desc';
+      final translatedDesc = t.tr(descKey);
+      final description = translatedDesc != descKey ? translatedDesc : (m['description']?.toString() ?? '');
       final done = m['done'] == true;
       final busy = _pendingKeys.contains(key);
 
@@ -399,9 +407,9 @@ class _ProcessScreenState extends State<ProcessScreen> {
       String timingHint = '';
       final keyLower = key.toLowerCase();
       if (keyLower.contains('plant') && sowingWindow.isNotEmpty) {
-        timingHint = 'Sowing window: $sowingWindow';
+        timingHint = '${t.tr('sowingWindow')}: $sowingWindow';
       } else if (keyLower.contains('harvest') && !keyLower.contains('post') && growingPeriod.isNotEmpty) {
-        timingHint = 'Expected: ~$growingPeriod after planting';
+        timingHint = '${t.tr('expected')}: ~$growingPeriod ${t.tr('afterPlanting')}';
       }
 
       widgets.add(
@@ -459,6 +467,15 @@ class _ProcessScreenState extends State<ProcessScreen> {
                                 color: AppColors.textSecondary,
                               ),
                             ),
+                          ] else if (description.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ],
                           if (timingHint.isNotEmpty) ...[
                             const SizedBox(height: 6),
@@ -491,8 +508,8 @@ class _ProcessScreenState extends State<ProcessScreen> {
     return widgets;
   }
 
-  Widget _buildEmptyState() {
-    final notSignedIn = _message?.startsWith('Sign in') ?? false;
+  Widget _buildEmptyState(AppLocalizations t) {
+    final notSignedIn = _message == 'signInProcess';
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
@@ -513,7 +530,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              notSignedIn ? 'Sign in to view your process' : 'No season plan yet',
+              notSignedIn ? t.tr('signInViewProcess') : t.tr('noSeasonPlanYet'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -524,8 +541,8 @@ class _ProcessScreenState extends State<ProcessScreen> {
             const SizedBox(height: 8),
             Text(
               notSignedIn
-                  ? 'Create an account or sign in to save and track your season plan.'
-                  : 'Start by planning your season. Once saved, your stages will appear here.',
+                  ? t.tr('createAccountSignIn')
+                  : t.tr('startByPlanning'),
               style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -559,7 +576,7 @@ class _ProcessScreenState extends State<ProcessScreen> {
                   ),
                 ),
                 icon: Icon(notSignedIn ? Icons.login : Icons.calendar_today_rounded),
-                label: Text(notSignedIn ? 'Sign in' : 'Plan new season'),
+                label: Text(notSignedIn ? t.tr('signIn') : t.tr('planNewSeason')),
               ),
             ),
           ],

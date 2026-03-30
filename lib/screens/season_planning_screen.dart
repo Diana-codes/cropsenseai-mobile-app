@@ -3,6 +3,7 @@ import '../utils/colors.dart';
 import '../data/rwanda_locations.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../l10n/app_localizations.dart';
 
 class SeasonPlanningScreen extends StatefulWidget {
   const SeasonPlanningScreen({super.key});
@@ -27,6 +28,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -36,9 +38,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
         ),
-        title: const Text(
-          'New Season Planning',
-          style: TextStyle(
+        title: Text(
+          t.tr('newSeasonPlanning'),
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -51,9 +53,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           children: [
             _buildProgressIndicator(),
             const SizedBox(height: 32),
-            if (_currentStep == 0) _buildStep1(),
-            if (_currentStep == 1) _buildStep2(),
-            if (_currentStep == 2) _buildStep3(),
+            if (_currentStep == 0) _buildStep1(t),
+            if (_currentStep == 1) _buildStep2(t),
+            if (_currentStep == 2) _buildStep3(t),
           ],
         ),
       ),
@@ -104,14 +106,14 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildStep1() {
+  Widget _buildStep1(AppLocalizations t) {
     return Column(
       children: [
         const Icon(Icons.location_on, size: 64, color: AppColors.primary),
         const SizedBox(height: 16),
-        const Text(
-          'Location & Season',
-          style: TextStyle(
+        Text(
+          t.tr('locationSeason'),
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -119,7 +121,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Tell us where and when you plan to cultivate',
+          t.tr('tellUsWhere'),
           style: TextStyle(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -135,7 +137,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           ),
           child: Column(
             children: [
-              _buildDropdown('Province', _province, RwandaLocations.getProvinces(), (value) {
+              _buildDropdown(t.tr('province'), _province, RwandaLocations.getProvinces(), (value) {
                 setState(() {
                   _province = value!;
                   _district = '';
@@ -143,61 +145,62 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                   _cell = '';
                   _village = '';
                 });
-              }),
+              }, t),
               if (_province.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _buildDropdown('District', _district, RwandaLocations.getDistricts(_province), (value) {
+                _buildDropdown(t.tr('district'), _district, RwandaLocations.getDistricts(_province), (value) {
                   setState(() {
                     _district = value!;
                     _sector = '';
                     _cell = '';
                     _village = '';
                   });
-                }),
+                }, t),
               ],
               if (_district.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _buildDropdown('Sector', _sector, RwandaLocations.getSectors(_province, _district), (value) {
+                _buildDropdown(t.tr('sector'), _sector, RwandaLocations.getSectors(_province, _district), (value) {
                   setState(() {
                     _sector = value!;
                     _cell = '';
                     _village = '';
                   });
-                }),
+                }, t),
               ],
               if (_sector.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _buildDropdown('Cell (Optional)', _cell, RwandaLocations.getCells(_province, _district, _sector), (value) {
+                _buildDropdown(t.tr('cellOptional'), _cell, RwandaLocations.getCells(_province, _district, _sector), (value) {
                   setState(() {
                     _cell = value ?? '';
                     _village = '';
                   });
-                }),
+                }, t),
               ],
               // Village can be selected if cell is selected
               if (_cell.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _buildDropdown('Village (Optional)', _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
+                _buildDropdown(t.tr('villageOptional'), _village, RwandaLocations.getVillages(_province, _district, _sector, _cell), (value) {
                   setState(() {
                     _village = value ?? '';
                   });
-                }),
+                }, t),
               ],
               const SizedBox(height: 16),
-              _buildDropdown(
-                'Season',
+              _buildMappedDropdown(
+                t.tr('season'),
                 _season,
-                [
-                  'Long rainy season (Feb - May)',
-                  'Short rainy season (Sep - Dec)',
-                  'Dry season (Jun - Aug)',
-                  'Dry season (Dec - Jan)',
-                ],
+                {
+                  'Long rainy season (Feb - May)': t.tr('longRainyFebMay'),
+                  'Short rainy season (Sep - Dec)': t.tr('shortRainySepDec'),
+                  'Dry season (Jun - Aug)': t.tr('dryJunAug'),
+                  'Dry season (Dec - Jan)': t.tr('dryDecJan'),
+                },
                 (value) {
                   setState(() {
                     _season = value!;
                   });
                 },
+                t,
               ),
               const SizedBox(height: 24),
               Container(
@@ -212,7 +215,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Current weather for your location will be shown in the results.',
+                        t.tr('weatherShownInResults'),
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -244,9 +247,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Next Step',
-                    style: TextStyle(
+                  child: Text(
+                    t.tr('nextStep'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -260,14 +263,14 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep2(AppLocalizations t) {
     return Column(
       children: [
         const Icon(Icons.landscape, size: 64, color: AppColors.primary),
         const SizedBox(height: 16),
-        const Text(
-          'Land Details',
-          style: TextStyle(
+        Text(
+          t.tr('landDetails'),
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -275,7 +278,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Provide information about your farm land',
+          t.tr('farmLandInfo'),
           style: TextStyle(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -291,13 +294,18 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           ),
           child: Column(
             children: [
-              _buildDropdown('Land type', _landType, ['Wetland', 'Hillside', 'Valley', 'Plateau'], (value) {
+              _buildMappedDropdown(t.tr('landType'), _landType, {
+                'Wetland': t.tr('wetland'),
+                'Hillside': t.tr('hillside'),
+                'Valley': t.tr('valley'),
+                'Plateau': t.tr('plateau'),
+              }, (value) {
                 setState(() {
                   _landType = value!;
                 });
-              }),
+              }, t),
               const SizedBox(height: 16),
-              _buildTextField('Land Size (hectares)', 'e.g., 2.5', _landSize, (value) {
+              _buildTextField(t.tr('landSizeHectares'), 'e.g., 2.5', _landSize, (value) {
                 setState(() {
                   _landSize = value;
                 });
@@ -316,7 +324,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Land type and size help us recommend the best crops and calculate expected yields for your farm.',
+                        t.tr('landTypeHelp'),
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textPrimary,
@@ -344,9 +352,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        t.tr('back'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -393,9 +401,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Text(
-                        'Analyze',
-                        style: TextStyle(
+                          : Text(
+                        t.tr('analyze'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -411,7 +419,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildStep3() {
+  Widget _buildStep3(AppLocalizations t) {
     return Column(
       children: [
         Container(
@@ -424,9 +432,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           child: const Icon(Icons.check, size: 48, color: AppColors.success),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'AI Analysis Complete',
-          style: TextStyle(
+        Text(
+          t.tr('aiAnalysisComplete'),
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -434,7 +442,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Based on your location and season, here are our recommendations',
+          t.tr('recommendationsBased'),
           style: TextStyle(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -443,21 +451,21 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
         ),
         const SizedBox(height: 32),
         if (_advisorData != null) ...[
-          _buildRecommendationResult(),
+          _buildRecommendationResult(t),
           const SizedBox(height: 16),
-          _buildAlternativeResult(),
+          _buildAlternativeResult(t),
           if (_advisorData!['weather'] != null) ...[
             const SizedBox(height: 24),
             _buildWeatherAnalysis(),
           ],
         ] else ...[
-          const Center(
+          Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Text(
-                'No recommendations available for this combination. Try a different land type or season.',
+                t.tr('noRecommendations'),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ),
           ),
@@ -490,17 +498,17 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                       if (!mounted) return;
                       if (saved != null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Season plan saved to your account. Use Process to track stages.',
+                              t.tr('planSaved'),
                             ),
                           ),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Could not save plan. Check connection and try again.',
+                              t.tr('planSaveFailed'),
                             ),
                           ),
                         );
@@ -509,9 +517,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                         (token == null || token.isEmpty) &&
                         _advisorData != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Sign in to save this plan to your account.',
+                            t.tr('signInToSave'),
                           ),
                         ),
                       );
@@ -538,9 +546,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Done',
-                    style: TextStyle(
+                : Text(
+                    t.tr('done'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -551,7 +559,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildDropdown(String label, String value, List<String> items, Function(String?) onChanged) {
+  Widget _buildDropdown(String label, String value, List<String> items, Function(String?) onChanged, AppLocalizations t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -574,7 +582,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
             child: DropdownButton<String>(
               value: value.isEmpty ? null : value,
               hint: Text(
-                'Choose $label',
+                '${t.tr('choose')} $label',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
@@ -585,6 +593,50 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 return DropdownMenuItem<String>(
                   value: item,
                   child: Text(item),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMappedDropdown(String label, String value, Map<String, String> itemsMap, Function(String?) onChanged, AppLocalizations t) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value.isEmpty ? null : value,
+              hint: Text(
+                '${t.tr('choose')} $label',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              isExpanded: true,
+              items: itemsMap.entries.map((entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: Text(entry.value),
                 );
               }).toList(),
               onChanged: onChanged,
@@ -625,7 +677,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildRecommendationResult() {
+  Widget _buildRecommendationResult(AppLocalizations t) {
     final best = _advisorData?['best_match'] as Map<String, dynamic>?;
     if (best == null) return const SizedBox.shrink();
     return Container(
@@ -651,7 +703,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  best['crop']?.toString() ?? 'Best crop',
+                  t.cropName(best['crop']?.toString() ?? '') .isNotEmpty
+                      ? t.cropName(best['crop']?.toString() ?? '')
+                      : t.tr('bestCrop'),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -665,9 +719,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                   color: AppColors.success,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'BEST MATCH',
-                  style: TextStyle(
+                child: Text(
+                  t.tr('bestMatch'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -688,9 +742,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildStatChip(best['growingPeriod']?.toString() ?? '—', 'Growing period'),
+              _buildStatChip(best['growingPeriod']?.toString() ?? '—', t.tr('growingPeriod')),
               const SizedBox(width: 12),
-              _buildStatChip(best['agroZone']?.toString() ?? '—', 'Agro zone'),
+              _buildStatChip(best['agroZone']?.toString() ?? '—', t.tr('agroZone')),
             ],
           ),
         ],
@@ -698,7 +752,7 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
     );
   }
 
-  Widget _buildAlternativeResult() {
+  Widget _buildAlternativeResult(AppLocalizations t) {
     final alts = _advisorData?['alternatives'] as List? ?? [];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,7 +782,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        alt['crop']?.toString() ?? 'Alternative',
+                        t.cropName(alt['crop']?.toString() ?? '') .isNotEmpty
+                            ? t.cropName(alt['crop']?.toString() ?? '')
+                            : t.tr('alternative'),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -742,9 +798,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                         color: AppColors.warning.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'Alternative',
-                        style: TextStyle(
+                      child: Text(
+                        t.tr('alternative'),
+                        style: const TextStyle(
                           color: AppColors.warning,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -764,9 +820,9 @@ class _SeasonPlanningScreenState extends State<SeasonPlanningScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    _buildStatChip(alt['growingPeriod']?.toString() ?? '—', 'Growing period'),
+                    _buildStatChip(alt['growingPeriod']?.toString() ?? '—', t.tr('growingPeriod')),
                     const SizedBox(width: 12),
-                    _buildStatChip(alt['agroZone']?.toString() ?? '—', 'Agro zone'),
+                    _buildStatChip(alt['agroZone']?.toString() ?? '—', t.tr('agroZone')),
                   ],
                 ),
               ],

@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:cropsense_ai/main.dart';
 import 'package:cropsense_ai/services/app_settings.dart';
 import 'package:cropsense_ai/data/rwanda_locations.dart';
+import 'package:cropsense_ai/l10n/app_localizations.dart';
 import 'package:cropsense_ai/screens/login_screen.dart';
 import 'package:cropsense_ai/screens/register_screen.dart';
 import 'package:cropsense_ai/screens/forgot_password_screen.dart';
 import 'package:cropsense_ai/screens/season_screen.dart';
+
+/// Wraps a widget with MaterialApp + localization delegates for testing.
+Widget _testApp(Widget child) {
+  return MaterialApp(
+    locale: const Locale('en'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: child,
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,15 +42,18 @@ void main() {
   // ── 1. App boot ───────────────────────────────────────────────────────────
 
   testWidgets('1. App shows login screen when not authenticated', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppSettings.init();
     await tester.pumpWidget(const CropSenseApp());
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('CropSense AI'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);
   });
 
   testWidgets('2. Main navigator has four bottom tabs', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: MainNavigator()));
+    await tester.pumpWidget(_testApp(const MainNavigator()));
     await tester.pump();
 
     expect(find.text('Home'), findsOneWidget);
@@ -48,7 +68,7 @@ void main() {
   // ── 2. Login screen ──────────────────────────────────────────────────────
 
   testWidgets('3. Login screen has email and password fields', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester.pumpWidget(_testApp(const LoginScreen()));
     await tester.pump();
 
     expect(find.widgetWithText(TextField, 'Email'), findsOneWidget);
@@ -57,14 +77,14 @@ void main() {
   });
 
   testWidgets('4. Login screen has forgot password link', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester.pumpWidget(_testApp(const LoginScreen()));
     await tester.pump();
 
     expect(find.text('Forgot password?'), findsOneWidget);
   });
 
   testWidgets('5. Login screen has register link', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester.pumpWidget(_testApp(const LoginScreen()));
     await tester.pump();
 
     expect(find.text("Don't have an account? "), findsOneWidget);
@@ -74,7 +94,7 @@ void main() {
   // ── 3. Register screen ───────────────────────────────────────────────────
 
   testWidgets('6. Register screen has all required fields', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: RegisterScreen()));
+    await tester.pumpWidget(_testApp(const RegisterScreen()));
     await tester.pump();
 
     expect(find.text('Create Account'), findsOneWidget);
@@ -86,7 +106,7 @@ void main() {
   });
 
   testWidgets('7. Register screen has province and district dropdowns', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: RegisterScreen()));
+    await tester.pumpWidget(_testApp(const RegisterScreen()));
     await tester.pump();
 
     expect(find.widgetWithText(DropdownButtonFormField<String>, 'Province'), findsOneWidget);
@@ -96,7 +116,7 @@ void main() {
   // ── 4. Forgot password screen ────────────────────────────────────────────
 
   testWidgets('8. Forgot password screen shows email form', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: ForgotPasswordScreen()));
+    await tester.pumpWidget(_testApp(const ForgotPasswordScreen()));
     await tester.pump();
 
     expect(find.text('Reset Password'), findsOneWidget);
@@ -105,19 +125,17 @@ void main() {
   });
 
   testWidgets('9. Forgot password has back to login navigation', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: ForgotPasswordScreen()));
+    await tester.pumpWidget(_testApp(const ForgotPasswordScreen()));
     await tester.pump();
 
-    // Back arrow exists for navigation
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-    // Email field hint text
     expect(find.text('you@example.com'), findsOneWidget);
   });
 
   // ── 5. Season screen ─────────────────────────────────────────────────────
 
   testWidgets('10. Season screen shows Rwanda seasons info', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SeasonScreen()));
+    await tester.pumpWidget(_testApp(const SeasonScreen()));
     await tester.pumpAndSettle();
 
     expect(find.text('Rwanda Seasons'), findsOneWidget);
@@ -141,7 +159,6 @@ void main() {
     expect(AppSettings.notificationsEnabled, isFalse);
     expect(AppSettings.notificationsNotifier.value, isFalse);
 
-    // Verify persisted
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('cropsense_notifications_v1'), isFalse);
   });
@@ -198,7 +215,7 @@ void main() {
   // ── 9. Navigation ────────────────────────────────────────────────────────
 
   testWidgets('18. Tapping Register link navigates to register screen', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester.pumpWidget(_testApp(const LoginScreen()));
     await tester.pump();
 
     await tester.tap(find.widgetWithText(TextButton, 'Register'));
@@ -208,7 +225,7 @@ void main() {
   });
 
   testWidgets('19. Tapping Forgot Password navigates to reset screen', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester.pumpWidget(_testApp(const LoginScreen()));
     await tester.pump();
 
     await tester.tap(find.text('Forgot password?'));
@@ -217,17 +234,15 @@ void main() {
     expect(find.text('Reset Password'), findsOneWidget);
   });
 
-  // ── 10. Bottom nav switching ──────────────────────────────────────────────
+  // ── 10. Locale & overflow ─────────────────────────────────────────────────
 
   testWidgets('20. Login screen renders without overflow', (tester) async {
-    // Verify login screen fits on different screen sizes
     tester.view.physicalSize = const Size(1080, 1920);
     tester.view.devicePixelRatio = 1.0;
 
-    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester.pumpWidget(_testApp(const LoginScreen()));
     await tester.pump();
 
-    // Should show all key elements without overflow
     expect(find.text('CropSense AI'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);
     expect(find.text('Forgot password?'), findsOneWidget);

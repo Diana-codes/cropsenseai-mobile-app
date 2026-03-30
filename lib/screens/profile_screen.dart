@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
+import '../l10n/app_localizations.dart';
 import '../services/app_settings.dart';
 import '../services/local_profile_service.dart';
 import '../services/auth_service.dart';
@@ -35,6 +36,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(
@@ -122,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildProfileItem(Icons.phone, phone),
                       const SizedBox(height: 12),
                     ],
-                    _buildProfileItem(Icons.verified_user_outlined, 'Account verified'),
+                    _buildProfileItem(Icons.verified_user_outlined, t.tr('accountVerified')),
                     const SizedBox(height: 12),
                     if (district.isNotEmpty && province.isNotEmpty)
                       _buildProfileItem(
@@ -153,8 +156,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         icon: const Icon(Icons.edit),
-                        label: const Text(
-                          'Update Information',
+                        label: Text(
+                          t.tr('updateInformation'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -167,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'SETTINGS',
+                t.tr('settings'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -177,46 +180,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               _buildSettingItem(
                 Icons.notifications_outlined,
-                'Notifications',
+                t.tr('notifications'),
                 true,
               ),
-              _buildSettingItem(Icons.security_outlined, 'Security', false,
+              _buildSettingItem(
+                Icons.language,
+                t.tr('language'),
+                false,
+                onTap: () => _showLanguageDialog(context, t),
+              ),
+              _buildSettingItem(Icons.security_outlined, t.tr('security'), false,
                   onTap: () => showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
-                      title: const Text('Account Security'),
-                      content: const Column(
+                      title: Text(t.tr('accountSecurity')),
+                      content: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Your account is protected with:'),
-                          SizedBox(height: 12),
-                          Text('🔒  Encrypted password storage'),
-                          SizedBox(height: 6),
-                          Text('🔑  Secure login tokens'),
-                          SizedBox(height: 6),
-                          Text('📵  Automatic session expiry'),
-                          SizedBox(height: 16),
+                          Text(t.tr('accountProtected')),
+                          const SizedBox(height: 12),
+                          Text('🔒  ${t.tr('encryptedStorage')}'),
+                          const SizedBox(height: 6),
+                          Text('🔑  ${t.tr('secureTokens')}'),
+                          const SizedBox(height: 6),
+                          Text('📵  ${t.tr('autoExpiry')}'),
+                          const SizedBox(height: 16),
                           Text(
-                            'To change your password, log out and use the "Forgot password" option on the login screen.',
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                            t.tr('changePasswordHint'),
+                            style: const TextStyle(fontSize: 13, color: Colors.grey),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
-                            'Always log out on shared devices to keep your account safe.',
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                            t.tr('sharedDeviceWarning'),
+                            style: const TextStyle(fontSize: 13, color: Colors.grey),
                           ),
                         ],
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Got it'),
+                          child: Text(t.tr('gotIt')),
                         ),
                       ],
                     ),
                   )),
-              _buildSettingItem(Icons.help_outline, 'Help', false,
+              _buildSettingItem(Icons.help_outline, t.tr('help'), false,
                   onTap: () => showModalBottomSheet(
                     context: context,
                     shape: const RoundedRectangleBorder(
@@ -228,22 +237,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Help & Support',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(t.tr('helpSupport'),
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
-                          const Text('How to use CropSense AI',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(t.tr('howToUse'),
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
-                          const Text(
-                            '1. Set your location and land type in your profile.\n'
-                            '2. Use AI Advisor to get crop recommendations for your area.\n'
-                            '3. Save a season plan to track your progress in the Process tab.\n'
-                            '4. Use the Crop Scanner to detect diseases on your crops.',
-                            style: TextStyle(fontSize: 13, height: 1.6),
+                          Text(
+                            t.tr('howToUseSteps'),
+                            style: const TextStyle(fontSize: 13, height: 1.6),
                           ),
                           const SizedBox(height: 16),
-                          const Text('Contact Support',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(t.tr('contactSupport'),
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           const Text(
                             '📧  support@cropsenseai.rw\n'
@@ -255,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: double.infinity,
                             child: TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Close'),
+                              child: Text(t.tr('close')),
                             ),
                           ),
                         ],
@@ -279,8 +285,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   icon: const Icon(Icons.logout),
-                  label: const Text(
-                    'Log out',
+                  label: Text(
+                    t.tr('logOut'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -300,6 +306,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context, AppLocalizations t) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(t.tr('language')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English'),
+              leading: Radio<String>(
+                value: 'en',
+                groupValue: AppSettings.localeNotifier.value.languageCode,
+                onChanged: (value) {
+                  AppSettings.setLocale(const Locale('en'));
+                  Navigator.pop(context);
+                  setState(() {});
+                },
+              ),
+            ),
+            ListTile(
+              title: const Text('Kinyarwanda'),
+              leading: Radio<String>(
+                value: 'rw',
+                groupValue: AppSettings.localeNotifier.value.languageCode,
+                onChanged: (value) {
+                  AppSettings.setLocale(const Locale('rw'));
+                  Navigator.pop(context);
+                  setState(() {});
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
