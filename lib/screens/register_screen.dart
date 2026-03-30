@@ -5,8 +5,6 @@ import '../services/auth_service.dart';
 import '../data/rwanda_locations.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
-import 'login_screen.dart';
-import 'terms_conditions_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -49,20 +47,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
-    final accepted = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const TermsConditionsScreen(),
-      ),
-    );
-
-    if (accepted != true) {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-      return;
-    }
-
     setState(() => _loading = true);
     _wakeTimer = Timer(const Duration(seconds: 5), () {
       if (mounted && _loading) setState(() => _serverWaking = true);

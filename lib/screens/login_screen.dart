@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../l10n/app_localizations.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+import 'terms_conditions_screen.dart';
 import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -132,10 +133,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(t.tr('noAccount')),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    onPressed: () async {
+                      final accepted = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(builder: (_) => const TermsConditionsScreen()),
                       );
+                      if (accepted == true && context.mounted) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                        );
+                      }
                     },
                     child: Text(t.tr('register')),
                   ),
