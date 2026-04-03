@@ -213,6 +213,15 @@ const Map<String, String> translationsRw = {
       "Nasomye amategeko n'amabwiriza kandi ndabyemera.",
   'checkBoxTerms':
       'Nyamuneka shyira akamenyetso ku kazu wemere amategeko.',
+  'eulaTitle': "Amasezerano y'Umukoresha (EULA)",
+  'eulaClause5': "5) Uburenganzira bw'ubwenge: CropSense AI, harimo imiterere yayo, kode, n'amakuru y'ubuhinzi, ni umutungo w'umuhanga wayikoze. Ntushobora gukoporora, guhindura, cyangwa gukwirakwiza porogaramu utabyemerewe.",
+  'eulaClause6': "6) Imipaka y'uburyozwe: CropSense AI itangwa \"uko iri.\" Umuhanga ntiyirengera ibyago by'umusaruro, igihombo cy'amafaranga, cyangwa ibisubizo bivuye mu gukurikiza inama z'porogaramu. Buri gihe banza ubaze inzobere z'ubuhinzi.",
+  'privacyTitle': "Politiki y'Ibanga",
+  'privacyClause1': "1) Amakuru dukusanya: Dukusanya izina ryawe, imeyili, nimero ya telefone, intara, n'akarere igihe wiyandikisha. Tubika kandi gahunda z'igihembwe n'amateka yo gusuzuma ibihingwa.",
+  'privacyClause2': "2) Uko dukoresha amakuru yawe: Amakuru y'aho uherereye akoreshwa gusa mu gutanga inama z'ibihingwa n'ikirere ku karere kawe. Ntidugurisha cyangwa ngo dusangire amakuru yawe bwite n'abandi.",
+  'privacyClause3': "3) Kubika no kurinda amakuru: Amakuru yawe abitswe neza muri bazidata ya PostgreSQL hamwe n'amagambo y'ibanga yanditswe mu buryo bwizewe (bcrypt) n'uburyo bwo kwinjira bushingiye ku bimenyetso (JWT).",
+  'privacyClause4': "4) Igihe cyo kubika amakuru: Amakuru ya konti yawe abikwa igihe konti yawe ikiri gukoreshwa. Ushobora gusaba gusibwa kwa konti yawe n'amakuru yose ajyanye nayo.",
+  'privacyClause5': "5) Uburenganzira bwawe: Hakurikijwe Itegeko No. 058/2021 ryo kurinda amakuru bwite mu Rwanda, ufite uburenganzira bwo kubona, gukosora, no gusaba gusibwa kw'amakuru yawe bwite igihe icyo ari cyo cyose.",
   'iAgree': 'Ndabyemeye',
   'disagree': 'Sinabyemera',
 

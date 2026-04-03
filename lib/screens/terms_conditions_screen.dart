@@ -61,18 +61,58 @@ class _TermsConditionsScreenState extends State<TermsConditionsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // ── End-User License Agreement ──
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  '${t.tr('termsClause1')}\n\n'
-                  '${t.tr('termsClause2')}\n\n'
-                  '${t.tr('termsClause3')}\n\n'
-                  '${t.tr('termsClause4')}',
-                  style: const TextStyle(fontSize: 13, height: 1.5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.tr('eulaTitle'),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${t.tr('termsClause1')}\n\n'
+                      '${t.tr('termsClause2')}\n\n'
+                      '${t.tr('termsClause3')}\n\n'
+                      '${t.tr('termsClause4')}\n\n'
+                      '${t.tr('eulaClause5')}\n\n'
+                      '${t.tr('eulaClause6')}',
+                      style: const TextStyle(fontSize: 13, height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // ── Privacy Policy ──
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.tr('privacyTitle'),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${t.tr('privacyClause1')}\n\n'
+                      '${t.tr('privacyClause2')}\n\n'
+                      '${t.tr('privacyClause3')}\n\n'
+                      '${t.tr('privacyClause4')}\n\n'
+                      '${t.tr('privacyClause5')}',
+                      style: const TextStyle(fontSize: 13, height: 1.5),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
