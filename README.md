@@ -1,260 +1,224 @@
-# CropSense AI 🌾
+# CropSense AI
 
 **AI-Driven Decision Support for Climate-Resilient Smallholder Farming in Rwanda**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter)](https://flutter.dev)
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
 
-## 📱 Overview
+## Overview
 
-CropSense AI is a mobile application that helps smallholder farmers in Rwanda with **crop disease detection**, **crop selection and season planning** based on location and weather, and **Rwanda-specific seasonal guidance** (rainy and dry seasons). The app uses a Flutter frontend, a FastAPI backend with a TensorFlow/Keras disease model, and Supabase for authentication.
+CropSense AI is a mobile-first decision support system that helps Rwandan smallholder farmers make better planting decisions. It combines **AI crop recommendations**, **CNN-based disease detection**, and **real-time weather data** in one bilingual (English/Kinyarwanda) mobile app.
 
-### Key Capabilities
+### Key Features
 
-- 🔍 **Crop Health Scanner** – Upload leaf images for AI-powered disease identification (Healthy, Powdery mildew, Rust) with confidence and weather-based advice
-- 🌾 **Crop selection & AI Advisor** – Get personalized **crop recommendations** based on province, district, land type, and season (Rwanda long/short rainy and dry seasons)
-- 📅 **Season Planning** – Multi-step wizard to plan a season and see best-match crops and alternatives
-- 🌤️ **Weather** – Real-time weather (Open-Meteo) for the selected location
-- 📍 **Rwanda locations** – Full hierarchy: Province → District → Sector → Cell → Village
-- 📲 **My current plan** – Summary of recommended crop and location on the home screen
-
----
-
-## 🎬 Demo Video
-
-A **5-minute demo video** shows the app in action. The video focuses on **core functionalities** (Crop Health Scanner, Season Planning, crop selection via AI Advisor, Rwanda Seasons, Process screen).
-
-- **Video link**: [https://drive.google.com/file/d/1uT95GxZMThcHiYPlwZMeJRoXhZBxjR-u/view?usp=sharing]
----
-
-## 📲 Deployed Version / Installable Package
-
-Use one of the following to try the app without building from source:
-
-| Type | Link / File |
-|------|-------------|
-| **Android APK** | [Download app-release.apk (v1.0.0)](https://github.com/Diana-codes/cropsenseai-mobile-app/releases/download/v1.0.0/app-release.apk) |
-| **Backend API (Render)** | `https://cropsenseai-mobile-app.onrender.com` |
-| **API docs** | `https://cropsenseai-mobile-app.onrender.com/docs` |
-
-*To build the APK locally:*  
-`flutter build apk --release --dart-define=API_BASE_URL=https://cropsenseai-mobile-app.onrender.com`  
-Output: `build/app/outputs/flutter-apk/app-release.apk`
+- **AI Crop Advisor** -- Rule-based crop recommendations using MINAGRI/FAO crop calendar data, localized to Rwanda's 6 agro-ecological zones
+- **Crop Health Scanner** -- MobileNetV2 CNN classifies leaf images as Healthy, Powdery Mildew, or Rust (99.35% accuracy)
+- **Real-time Weather** -- Dual weather providers (Open-Meteo + OpenWeatherMap) with district-level precision
+- **Season Planning** -- 5-stage season tracker with crop-specific guidance for 9 major Rwanda crops
+- **Bilingual** -- Full English/Kinyarwanda translation (150+ strings, crop names, stage guidance)
+- **Offline Support** -- Weather (2h TTL) and advisor (6h TTL) caching for low-connectivity areas
+- **Smart Alerts** -- Context-aware notifications: sowing windows, humidity warnings, crop recommendations
+- **EULA & Privacy Policy** -- Consent-first registration with Rwanda data protection law compliance
 
 ---
 
-## 🚀 Installation & Running (Step by Step)
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Mobile App | Flutter (Dart) -- Android-first |
+| Backend API | FastAPI (Python) |
+| Database | PostgreSQL (production) / SQLite (development) |
+| ML Model | MobileNetV2 (TensorFlow/Keras) |
+| Authentication | JWT + bcrypt (FastAPI-based) |
+| Weather | Open-Meteo + OpenWeatherMap APIs |
+| Hosting | Render.com (backend + PostgreSQL) |
+| Model Hosting | HuggingFace Hub |
+
+---
+
+## Deployed Version
+
+| Type | Link |
+|------|------|
+| **Android APK** | [Download app-release.apk](https://github.com/Diana-codes/cropsenseai-mobile-app/releases/download/v1.0.0/app-release.apk) |
+| **Backend API** | `https://cropsenseai-mobile-app.onrender.com` |
+| **API Docs** | `https://cropsenseai-mobile-app.onrender.com/docs` |
+| **Database Stats** | `https://cropsenseai-mobile-app.onrender.com/admin/stats` |
+
+---
+
+## Installation & Running
 
 ### Prerequisites
 
-- **Flutter SDK** 3.0+ ([Install Flutter](https://flutter.dev/docs/get-started/install))
-- **Python** 3.12+ (for backend)
-- **Git**  
-- **Android**: Android Studio / SDK (for Android) or **iOS**: Xcode (macOS, for iOS)
+- **Flutter SDK** >= 3.0.0 ([Install Flutter](https://flutter.dev/docs/get-started/install))
+- **Python** >= 3.10 ([Install Python](https://www.python.org/downloads/))
+- **Android device or emulator** for running the mobile app
+- **Git** for cloning the repository
 
-### Step 1: Clone the repository
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/Diana-codes/cropsenseai-mobile-app.git
 cd cropsenseai-mobile-app
 ```
 
-### Step 2: Backend setup
-
-1. Create and activate a virtual environment:
-
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate   # Windows: .venv\Scripts\activate
-   ```
-
-2. Install Python dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. (Optional) For production, the backend loads the disease model from **Hugging Face**. Set:
-   - `HUGGINGFACE_MODEL_ID=Ruzindana/cropsense-mobilenetv2`
-   - `HUGGINGFACE_HUB_TOKEN=<your-token>`
-
-   For local runs, place `outputs/best_model.keras` and `outputs/model_metadata.json` in the project (or use Hugging Face as above).
-
-4. Start the backend:
-
-   ```bash
-   ./start_backend.sh
-   # or: uvicorn main:app --host 0.0.0.0 --port 8000
-   ```
-
-   Leave this terminal open. Confirm: `curl http://localhost:8000/` returns JSON with `"model_loaded": true` (or similar).
-
-### Step 3: Flutter app setup
-
-1. Install Flutter dependencies:
-
-   ```bash
-   flutter pub get
-   ```
-
-2. Run the app:
-
-   - **Chrome (web):**  
-     `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000`
-
-   - **Android emulator:**  
-     `flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:8000`
-
-   - **Physical Android device (same Wi‑Fi as your machine):**  
-     Replace `YOUR_IP` with your computer’s IP (e.g. from `ipconfig getifaddr en0`).  
-     `flutter run -d YOUR_DEVICE_ID --dart-define=API_BASE_URL=http://YOUR_IP:8000`
-
-   - **Against deployed backend:**  
-     `flutter run --dart-define=API_BASE_URL=https://cropsenseai-mobile-app.onrender.com`
-
-### Step 4: Supabase (for login/profile)
-
-1. Create a project at [Supabase](https://supabase.com).
-2. In **Project Settings → API**, copy **Project URL** and **anon public** key.
-3. In `lib/services/supabase_service.dart`, set:
-   - `supabaseUrl`
-   - `supabaseAnonKey`
-
-Use your Supabase project URL and anon key in `lib/services/supabase_service.dart`.
-
----
-
-## 📁 Related Files & Project Structure
-
-### Documentation
-
-| File | Description |
-|------|-------------|
-| `README.md` | This file – overview, install, run, demo, deployment |
-| `training/README.md` | How to run the training script and notebook |
-| `dataset/README.md` | Dataset layout (Healthy, Powdery, Rust) |
-
-### Configuration
-
-| File | Description |
-|------|-------------|
-| `pubspec.yaml` | Flutter dependencies and app config |
-| `requirements.txt` | Python backend dependencies |
-| `training/requirements-training.txt` | Extra deps for model training |
-
-### Backend (Python)
-
-| File | Description |
-|------|-------------|
-| `main.py` | FastAPI app: `/`, `/predict`, `/weather`, `/advisor`, `/crops`, `/advice` |
-| `services.py` | WeatherService, RwandaAgronomistAdvisor, RwandaCropPlanner |
-| `Rwanda_Crop_calendar_Data.csv` | Crop calendar used for crop selection and season planning |
-
-### Frontend (Flutter)
-
-| Path | Description |
-|------|-------------|
-| `lib/main.dart` | App entry, auth wrapper, bottom nav (Home, Process, Season, Account) |
-| `lib/screens/home_screen.dart` | Home: weather, quick actions, My current plan, alerts |
-| `lib/screens/crop_health_scanner_screen.dart` | Crop Health Scanner – capture/upload image, show prediction & advice |
-| `lib/screens/ai_advisor_screen_enhanced.dart` | AI Advisor – location, season, land type → crop selection |
-| `lib/screens/season_planning_screen.dart` | New Season Planning – 3 steps, crop selection result |
-| `lib/screens/season_screen.dart` | Rwanda Seasons tab – rainy/dry seasons, current season, links |
-| `lib/screens/process_screen.dart` | Season Process – generic season stages |
-| `lib/screens/login_screen.dart`, `profile_screen.dart`, … | Auth and profile |
-| `lib/services/api_service.dart` | HTTP calls to backend |
-| `lib/services/supabase_service.dart` | Supabase URL and anon key |
-| `lib/services/app_settings.dart` | In-app notification toggle |
-| `lib/data/rwanda_locations.dart` | Provinces, districts, sectors, cells, villages |
-
-### ML / Training
-
-| Path | Description |
-|------|-------------|
-| `training/train_and_compare_models.py` | Trains 5 models, saves best as `outputs/best_model.keras` |
-| `training/CropSense_Model_Training.ipynb` | Same workflow in a Jupyter notebook |
-| `outputs/best_model.keras` | Deployed disease model (MobileNetV2) |
-| `outputs/model_metadata.json` | Class names for the model |
-| `dataset/Train/Healthy`, `Powdery`, `Rust` | Training images |
-
-### Scripts
-
-| File | Description |
-|------|-------------|
-| `start_backend.sh` | Starts the FastAPI backend (venv + uvicorn) |
-
----
-
-## ✨ Features (incl. crop selection)
-
-1. **Crop Health Scanner**  
-   Upload a leaf image → backend runs the disease model → app shows predicted class (Healthy / Powdery / Rust), confidence, weather, and agronomic advice.
-
-2. **Crop selection & AI Advisor**  
-   User selects **location** (province, district, sector, etc.), **season** (e.g. Long rainy, Short rainy, Dry), and **land type** (Wetland, Hillside, Valley, Plateau). The backend returns a **best-match crop** and **alternatives** for that combination; the app shows “Location: … • Season: …” so it’s clear what the selection is based on.
-
-3. **Season Planning**  
-   Multi-step flow: (1) Location & season, (2) Land type & size, (3) Analyze → **crop selection** result with best match and alternatives, plus weather. “Done” closes the flow; the result can inform the home “My current plan.”
-
-4. **Rwanda Seasons**  
-   Explains long/short rainy and dry seasons (no winter/summer). Shows current season by month. Quick links to “Plan new season” and “Get AI advice.”
-
-5. **My current plan (Home)**  
-   Card under Quick Actions showing the latest **crop selection** (best crop) and location/season for the user.
-
-6. **Season Process**  
-   Generic, honest list of typical season stages (prepare land, plant, manage, harvest, post-harvest). No fake progress; future work will tie it to the user’s plan.
-
-7. **Notifications (in-app)**  
-   Toggle in Profile. When on, Home shows a season-reminder banner using the latest advisor result.
-
-8. **Authentication & profile**  
-   Supabase email/password; profile stores name, location (province, district), land size, etc., used as default for weather and recommendations.
-
----
-
-## 🔌 API Endpoints (summary)
-
-- `GET /` – Health check (`model_loaded`, etc.)
-- `POST /predict` – Image → disease prediction, confidence, weather, advice
-- `POST /advisor` – Body: province, district, sector, season, landType → crop selection (best match + alternatives) and weather
-- `GET /weather` – Weather for a location
-- `GET /crops` – List of supported crops
-- `POST /advice` – Agronomic advice for a given crop and weather
-
-Interactive docs: `http://localhost:8000/docs` (or your deployed URL + `/docs`).
-
----
-
-## 📦 Build installable package (APK)
+### Step 2: Backend Setup (FastAPI)
 
 ```bash
-flutter build apk --release --dart-define=API_BASE_URL=https://cropsenseai-mobile-app.onrender.com
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run the backend
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-APK path: `build/app/outputs/flutter-apk/app-release.apk`.  
-Upload this to a GitHub Release or your chosen host and put the link in the “Deployed Version / Installable Package” section above.
+The API will be available at `http://localhost:8000`. Visit `http://localhost:8000/docs` for interactive API documentation.
+
+**Environment variables (optional for local dev):**
+
+| Variable | Description |
+|----------|-------------|
+| `CROPSENSE_JWT_SECRET` | Secret key for JWT tokens (defaults to dev key) |
+| `DATABASE_URL` | PostgreSQL connection string (defaults to SQLite) |
+| `CROPSENSE_ENABLE_TF` | Set to `1` to enable TensorFlow model loading |
+| `HUGGINGFACE_MODEL_ID` | HuggingFace repo ID for model download |
+| `HUGGINGFACE_HUB_TOKEN` | HuggingFace auth token |
+| `OPENWEATHER_API_KEY` | OpenWeatherMap API key (falls back to Open-Meteo) |
+
+### Step 3: Flutter App Setup
+
+```bash
+# Install dependencies
+flutter pub get
+
+# Check connected devices
+flutter devices
+
+# Run on connected Android device
+flutter run -d <DEVICE_ID>
+
+# Or run against deployed backend (no local backend needed)
+flutter run
+```
+
+### Step 4: Build APK
+
+```bash
+flutter build apk --release
+```
+
+Output: `build/app/outputs/flutter-apk/app-release.apk`
 
 ---
 
-## 📄 License
+## Running Tests
 
-This project uses the MIT license (or as specified in the repository). The Hugging Face model `Ruzindana/cropsense-mobilenetv2` is used under its stated license.
+```bash
+# Flutter widget tests (20 tests)
+flutter test
+
+# Backend API tests (19 tests)
+pip install pytest pytest-asyncio httpx python-jose[cryptography]
+python -m pytest tests/ -v
+```
+
+**Total: 39 automated tests** covering authentication, API endpoints, UI navigation, settings, localization, and Rwanda location data.
 
 ---
 
-## 👤 Author
+## Project Structure
 
-**Diana RUZINDANA** – CropSense AI (BSc. Software Engineering / Smart farming for Rwanda)
-
-- GitHub: [Diana-codes/cropsenseai-mobile-app](https://github.com/Diana-codes/cropsenseai-mobile-app)
-- Demo video: [https://drive.google.com/file/d/1uT95GxZMThcHiYPlwZMeJRoXhZBxjR-u/view?usp=sharing]
-- Deployed API: (https://cropsenseai-mobile-app.onrender.com)
+```
+cropsenseai-mobile-app/
+├── lib/                          # Flutter mobile app
+│   ├── screens/                  # All app screens (12 screens)
+│   ├── services/                 # API, auth, settings, connectivity
+│   ├── l10n/                     # Localization (English + Kinyarwanda)
+│   ├── widgets/                  # Reusable UI components
+│   ├── data/                     # Rwanda locations hierarchy
+│   └── main.dart                 # App entry point
+├── main.py                       # FastAPI backend (all endpoints)
+├── services.py                   # WeatherService, Advisor, CropPlanner
+├── Rwanda_Crop_calendar_Data.csv # MINAGRI/FAO crop calendar (30+ crops)
+├── training/                     # ML model training
+│   └── CropSense_Model_Training.ipynb
+├── dataset/Train/                # Training images (1,532 total)
+│   ├── Healthy/                  # 528 images
+│   ├── Powdery/                  # 500 images
+│   └── Rust/                     # 504 images
+├── tests/test_api.py             # 19 backend API tests
+├── test/widget_test.dart         # 20 Flutter widget tests
+└── FormattingGuidelines-IJCAI-ECAI-26/  # Research paper (LaTeX)
+```
 
 ---
 
-**Last updated**: March 2025 · **Version**: 1.0.0
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Health check |
+| `/health` | GET | Detailed health status |
+| `/auth/register` | POST | User registration |
+| `/auth/login` | POST | User login (returns JWT) |
+| `/auth/me` | GET | Get current user profile |
+| `/auth/profile` | PUT | Update profile |
+| `/auth/forgot-password` | POST | Request password reset |
+| `/auth/reset-password` | POST | Reset password with token |
+| `/advisor` | POST | Crop recommendations by location/season |
+| `/predict` | POST | Disease detection from leaf image |
+| `/weather` | GET | Weather data for location |
+| `/crops` | GET | List supported crops |
+| `/season-plans` | POST | Create season plan |
+| `/season-plans/active` | GET | Get active season plan |
+| `/season-plans/{id}/stages` | PATCH | Update stage progress |
+| `/admin/stats` | GET | Database overview |
+
+---
+
+## Model Training
+
+The training notebook is at `training/CropSense_Model_Training.ipynb`. Five models were benchmarked:
+
+| Model | Accuracy | ROC-AUC | Parameters |
+|-------|----------|---------|------------|
+| **MobileNetV2** | **99.35%** | **0.9994** | ~3.4M |
+| ResNet50V2 | 96.75% | 0.9990 | ~25.6M |
+| Custom CNN | 92.21% | 0.9934 | ~0.5M |
+| Logistic Regression | 77.92% | 0.9172 | ~49K |
+| VGG16 | 76.62% | 0.9203 | ~138M |
+
+**Training config:** 128x128 input, 30 epochs, batch size 32, Adam optimizer, early stopping (patience=5), stratified 70/20/10 split.
+
+---
+
+## Data Sources
+
+| Source | Type | Used For |
+|--------|------|----------|
+| PlantVillage (Kaggle) | 1,532 leaf images | Disease detection model |
+| FAO/MINAGRI Crop Calendar | CSV (30+ crops) | Crop recommendation engine |
+| Open-Meteo | Real-time API | Weather data (primary) |
+| OpenWeatherMap | Real-time API | Weather data (secondary) |
+| NISR Rwanda | Administrative data | Location hierarchy |
+
+---
+
+## Author
+
+**Diana Ruzindana** -- African Leadership University, Kigali, Rwanda
+
+**Supervisor:** Muyonga Marvin Ogore -- African Leadership University
+
+---
+
+**Last updated**: April 2026
